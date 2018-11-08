@@ -13,7 +13,7 @@
         android:id="@+id/main_top"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="50"
+        android:layout_weight="45"
         android:background="@drawable/main_top"
         android:gravity="center"
         android:orientation="vertical">
@@ -40,194 +40,302 @@
             android:text="@string/main_musician"
             android:textColor="@color/colorGrayDarker"
             android:textSize="14sp" />
-
     </LinearLayout>
 
-    <ScrollView
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="50"
-        android:background="@color/colorWhite"
-        android:gravity="center_horizontal"
-        android:orientation="vertical">
+        android:layout_weight="55">
 
-        <LinearLayout
-            android:id="@+id/main_body"
+        <ScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/colorWhite"
             android:gravity="center_horizontal"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
-                android:paddingStart="20dp"
-                android:paddingTop="20dp"
-                android:paddingEnd="20dp"
-                android:text="@string/main_body_timier"
-                android:textColor="@color/colorMagenta"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+            android:orientation="vertical"
+            android:scrollbars="none">
 
             <LinearLayout
-                android:id="@+id/main_body_timer"
+                android:id="@+id/main_body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="15dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="20dp"
-                android:paddingEnd="20dp">
-
-                <EditText
-                    android:id="@+id/main_body_timer_h1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="5dp"
-                    android:background="@color/colorWhiteDark"
-                    android:hint="@string/main_body_timier_hint"
-                    android:imeOptions="actionDone"
-                    android:importantForAutofill="no"
-                    android:inputType="number"
-                    android:maxLength="1"
-                    android:singleLine="true"
-                    android:textColorHint="@color/colorGrayDark"
-                    android:textSize="64sp" />
-
-                <EditText
-                    android:id="@+id/main_body_timer_h2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="5dp"
-                    android:background="@color/colorWhiteDark"
-                    android:hint="@string/main_body_timier_hint"
-                    android:imeOptions="actionDone"
-                    android:importantForAutofill="no"
-                    android:inputType="number"
-                    android:maxLength="1"
-                    android:singleLine="true"
-                    android:textColorHint="@color/colorGrayDark"
-                    android:textSize="64sp" />
+                android:background="@color/colorWhite"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:paddingEnd="5dp"
-                    android:text="@string/main_body_timier_bar"
-                    android:textColor="@color/colorGrayDark"
-                    android:textSize="64sp"
-                    tools:ignore="RtlSymmetry" />
-
-                <EditText
-                    android:id="@+id/main_body_timer_m1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="5dp"
-                    android:background="@color/colorWhiteDark"
-                    android:hint="@string/main_body_timier_hint"
-                    android:imeOptions="actionDone"
-                    android:importantForAutofill="no"
-                    android:inputType="number"
-                    android:maxLength="1"
-                    android:singleLine="true"
-                    android:textColorHint="@color/colorGrayDark"
-                    android:textSize="64sp" />
-
-                <EditText
-                    android:id="@+id/main_body_timer_m2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="5dp"
-                    android:background="@color/colorWhiteDark"
-                    android:hint="@string/main_body_timier_hint"
-                    android:imeOptions="actionDone"
-                    android:importantForAutofill="no"
-                    android:inputType="number"
-                    android:maxLength="1"
-                    android:singleLine="true"
-                    android:textColorHint="@color/colorGrayDark"
-                    android:textSize="64sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingEnd="5dp"
-                    android:text="@string/main_body_timier_bar"
-                    android:textColor="@color/colorGrayDark"
-                    android:textSize="64sp"
-                    tools:ignore="RtlSymmetry" />
-
-                <EditText
-                    android:id="@+id/main_body_timer_s1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="5dp"
-                    android:background="@color/colorWhiteDark"
-                    android:hint="@string/main_body_timier_hint"
-                    android:imeOptions="actionDone"
-                    android:importantForAutofill="no"
-                    android:inputType="number"
-                    android:maxLength="1"
-                    android:singleLine="true"
-                    android:textColorHint="@color/colorGrayDark"
-                    android:textSize="64sp" />
-
-                <EditText
-                    android:id="@+id/main_body_timer_s2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@color/colorWhiteDark"
-                    android:hint="@string/main_body_timier_hint"
-                    android:imeOptions="actionDone"
-                    android:importantForAutofill="no"
-                    android:inputType="number"
-                    android:maxLength="1"
-                    android:singleLine="true"
-                    android:textColorHint="@color/colorGrayDark"
-                    android:textSize="64sp" />
-            </LinearLayout>
-
-            <RelativeLayout
-                android:id="@+id/main_body_motor"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
-                android:gravity="center_vertical"
-                android:paddingStart="20dp"
-                android:paddingEnd="20dp">
+                    android:layout_marginBottom="5dp"
+                    android:paddingStart="20dp"
+                    android:paddingTop="25dp"
+                    android:paddingEnd="20dp"
+                    android:text="@string/main_body_timier"
+                    android:textColor="@color/colorMagenta"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
+                    android:id="@+id/main_body_timer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
                     android:gravity="center_vertical"
-                    android:orientation="vertical">
+                    android:orientation="horizontal"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp">
+
+                    <EditText
+                        android:id="@+id/main_body_timer_h1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="5dp"
+                        android:background="@color/colorWhiteDark"
+                        android:hint="@string/main_body_timier_hint"
+                        android:imeOptions="actionDone"
+                        android:importantForAutofill="no"
+                        android:inputType="number"
+                        android:maxLength="1"
+                        android:singleLine="true"
+                        android:textColorHint="@color/colorGrayDark"
+                        android:textSize="64sp" />
+
+                    <EditText
+                        android:id="@+id/main_body_timer_h2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="5dp"
+                        android:background="@color/colorWhiteDark"
+                        android:hint="@string/main_body_timier_hint"
+                        android:imeOptions="actionDone"
+                        android:importantForAutofill="no"
+                        android:inputType="number"
+                        android:maxLength="1"
+                        android:singleLine="true"
+                        android:textColorHint="@color/colorGrayDark"
+                        android:textSize="64sp" />
 
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="5dp"
-                        android:paddingStart="20dp"
-                        android:paddingEnd="20dp"
-                        android:text="@string/main_body_motor"
-                        android:textColor="@color/colorBlack"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
+                        android:paddingEnd="5dp"
+                        android:text="@string/main_body_timier_bar"
+                        android:textColor="@color/colorGrayDark"
+                        android:textSize="64sp"
+                        tools:ignore="RtlSymmetry" />
+
+                    <EditText
+                        android:id="@+id/main_body_timer_m1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="5dp"
+                        android:background="@color/colorWhiteDark"
+                        android:hint="@string/main_body_timier_hint"
+                        android:imeOptions="actionDone"
+                        android:importantForAutofill="no"
+                        android:inputType="number"
+                        android:maxLength="1"
+                        android:singleLine="true"
+                        android:textColorHint="@color/colorGrayDark"
+                        android:textSize="64sp" />
+
+                    <EditText
+                        android:id="@+id/main_body_timer_m2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="5dp"
+                        android:background="@color/colorWhiteDark"
+                        android:hint="@string/main_body_timier_hint"
+                        android:imeOptions="actionDone"
+                        android:importantForAutofill="no"
+                        android:inputType="number"
+                        android:maxLength="1"
+                        android:singleLine="true"
+                        android:textColorHint="@color/colorGrayDark"
+                        android:textSize="64sp" />
 
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="5dp"
-                        android:paddingStart="20dp"
-                        android:paddingEnd="20dp"
-                        android:text="@string/main_body_motor"
-                        android:textColor="@color/colorBlack"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
+                        android:paddingEnd="5dp"
+                        android:text="@string/main_body_timier_bar"
+                        android:textColor="@color/colorGrayDark"
+                        android:textSize="64sp"
+                        tools:ignore="RtlSymmetry" />
+
+                    <EditText
+                        android:id="@+id/main_body_timer_s1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="5dp"
+                        android:background="@color/colorWhiteDark"
+                        android:hint="@string/main_body_timier_hint"
+                        android:imeOptions="actionDone"
+                        android:importantForAutofill="no"
+                        android:inputType="number"
+                        android:maxLength="1"
+                        android:singleLine="true"
+                        android:textColorHint="@color/colorGrayDark"
+                        android:textSize="64sp" />
+
+                    <EditText
+                        android:id="@+id/main_body_timer_s2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@color/colorWhiteDark"
+                        android:hint="@string/main_body_timier_hint"
+                        android:imeOptions="actionDone"
+                        android:importantForAutofill="no"
+                        android:inputType="number"
+                        android:maxLength="1"
+                        android:singleLine="true"
+                        android:textColorHint="@color/colorGrayDark"
+                        android:textSize="64sp" />
                 </LinearLayout>
 
-            </RelativeLayout>
+                <RelativeLayout
+                    android:id="@+id/main_body_fnd"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    android:gravity="center_vertical"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="5dp"
+                            android:text="@string/main_body_fnd"
+                            android:textColor="@color/colorBlack"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/main_body_fnd_text"
+                            android:textColor="@color/colorGrayDarker"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <Switch
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:checked="true" />
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:id="@+id/main_body_motor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    android:gravity="center_vertical"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="5dp"
+                            android:text="@string/main_body_motor"
+                            android:textColor="@color/colorBlack"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/main_body_motor_text"
+                            android:textColor="@color/colorGrayDarker"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <Switch
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:checked="true" />
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:id="@+id/main_body_team"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="80dp"
+                    android:gravity="center_vertical"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="5dp"
+                            android:text="@string/main_body_team"
+                            android:textColor="@color/colorBlack"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/main_body_team_text"
+                            android:textColor="@color/colorGrayDarker"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </RelativeLayout>
+            </LinearLayout>
+        </ScrollView>
+
+        <LinearLayout
+            android:id="@+id/main_bar"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/main_bar"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <Button
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_marginEnd="70dp"
+                android:alpha="2"
+                android:background="@drawable/main_bar_prev" />
+
+            <Button
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="70dp"
+                android:alpha="2"
+                android:background="@drawable/main_bar_play" />
+
+            <Button
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:alpha="2"
+                android:background="@drawable/main_bar_next" />
         </LinearLayout>
-    </ScrollView>
+    </RelativeLayout>
 </LinearLayout>

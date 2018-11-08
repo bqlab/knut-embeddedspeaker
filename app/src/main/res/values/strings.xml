@@ -11,6 +11,10 @@
     <string name="main_body_timier">시간 설정(필수)</string>
     <string name="main_body_timier_hint">0</string>
     <string name="main_body_timier_bar">:</string>
+    <string name="main_body_fnd">7-Segment Desplay 활성화</string>
+    <string name="main_body_fnd_text">두자리 수 FND를 활성화시켜, 브래드보드\n위에서도 타이머를 봅니다.</string>
     <string name="main_body_motor">모터 회전</string>
-    <string name="main_body_motor_text">모터가 20초마다 한번 회전합니다.</string>
+    <string name="main_body_motor_text">모터가 20초마다 한번씩 회전합니다.\n교수님께서 말씀하신 조건 중 하나입니다.</string>
+    <string name="main_body_team">개발자들</string>
+    <string name="main_body_team_text">한국교통대학교 박승연, 최신호.</string>
 </resources>
