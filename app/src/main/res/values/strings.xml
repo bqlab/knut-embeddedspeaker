@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">embeddedspeaker</string>
+    <string name="main_music">---</string>
+    <string name="main_musician">---</string>
+    <string name="main_music1">삐삐</string>
+    <string name="main_music2">여행</string>
+    <string name="main_music3">폰서트</string>
+    <string name="main_musician1">아이유(IU)</string>
+    <string name="main_musician2">볼빨간사춘기(bolbbalgan4)</string>
+    <string name="main_musician3">10cm</string>
+    <string name="main_body_timier">시간 설정(필수)</string>
+    <string name="main_body_timier_hint">0</string>
+    <string name="main_body_timier_bar">:</string>
+    <string name="main_body_motor">모터 회전</string>
+    <string name="main_body_motor_text">모터가 20초마다 한번 회전합니다.</string>
 </resources>
