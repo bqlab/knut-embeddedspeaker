@@ -77,10 +77,10 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout l = new LinearLayout(this);
         l.setOrientation(LinearLayout.VERTICAL);
         l.setGravity(Gravity.CENTER_HORIZONTAL);
-        
+
         new AlertDialog.Builder(this)
                 .setTitle("연결할 디바이스를 선택하세요.")
-                .setView(t)
+                .setView(l)
                 .setPositiveButton("확인", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
