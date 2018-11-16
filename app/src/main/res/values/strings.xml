@@ -1,13 +1,13 @@
 <resources>
     <string name="app_name">embeddedspeaker</string>
-    <string name="main_music">---</string>
-    <string name="main_musician">---</string>
-    <string name="main_music1">삐삐</string>
-    <string name="main_music2">여행</string>
-    <string name="main_music3">폰서트</string>
-    <string name="main_musician1">아이유(IU)</string>
-    <string name="main_musician2">볼빨간사춘기(bolbbalgan4)</string>
-    <string name="main_musician3">10cm</string>
+    <string name="main_music_name_none">---</string>
+    <string name="main_music_musician_none">---</string>
+    <string name="main_music_name1">삐삐</string>
+    <string name="main_music_name2">여행</string>
+    <string name="main_music_name3">폰서트</string>
+    <string name="main_music_musician1">아이유(IU)</string>
+    <string name="main_music_musician2">볼빨간사춘기(bolbbalgan4)</string>
+    <string name="main_music_musician3">10cm</string>
     <string name="main_body_timier">시간 설정(필수)</string>
     <string name="main_body_timier_hint">0</string>
     <string name="main_body_timier_bar">:</string>

@@ -10,34 +10,37 @@
     tools:context=".MainActivity">
 
     <LinearLayout
-        android:id="@+id/main_top"
+        android:id="@+id/main_music"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="45"
-        android:background="@drawable/main_top"
+        android:background="@drawable/main_music_none"
         android:gravity="center"
         android:orientation="vertical">
 
         <Button
+            android:id="@+id/main_music_profile"
             android:layout_width="180dp"
             android:layout_height="180dp"
-            android:background="@drawable/main_bluetooth" />
+            android:background="@drawable/main_music_profile_none" />
 
         <TextView
+            android:id="@+id/main_music_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:gravity="center"
-            android:text="@string/main_music"
+            android:text="@string/main_music_name_none"
             android:textColor="@color/colorGrayDarker"
             android:textSize="14sp"
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/main_music_musician"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="@string/main_musician"
+            android:text="@string/main_music_musician_none"
             android:textColor="@color/colorGrayDarker"
             android:textSize="14sp" />
     </LinearLayout>
@@ -318,6 +321,7 @@
             android:orientation="horizontal">
 
             <Button
+                android:id="@+id/main_bar_prev"
                 android:layout_width="25dp"
                 android:layout_height="25dp"
                 android:layout_marginEnd="70dp"
@@ -325,6 +329,7 @@
                 android:background="@drawable/main_bar_prev" />
 
             <Button
+                android:id="@+id/main_bar_play"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_marginEnd="70dp"
@@ -332,6 +337,7 @@
                 android:background="@drawable/main_bar_play" />
 
             <Button
+                android:id="@+id/main_bar_next"
                 android:layout_width="25dp"
                 android:layout_height="25dp"
                 android:alpha="2"
