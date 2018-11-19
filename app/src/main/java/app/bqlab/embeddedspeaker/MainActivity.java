@@ -7,7 +7,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
@@ -36,17 +35,23 @@ public class MainActivity extends AppCompatActivity {
         init();
     }
 
-    private void init() {
-        //Function initializing
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        isConnected = false;
+    }
 
+    private void init() {
         //main_music setting
         mainMusic = findViewById(R.id.main_music);
         mainMusicProfile = findViewById(R.id.main_music_profile);
         mainMusicProfile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                playMusic();
+                if (isConnected)
+                    playMusic();
+                else
+                    setAboutBluetooth();
             }
         });
         mainMusicName = findViewById(R.id.main_music_name);
@@ -63,34 +68,40 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void playMusic() {
-        if (bluetoothAdapter == null) {
-            Toast.makeText(MainActivity.this, "지원하지 않는 디바이스입니다.", Toast.LENGTH_LONG).show();
-            finishAffinity();
-        } else if (!bluetoothAdapter.isEnabled()) {
-            Intent i = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(i, REQUEST_ENABLE_BT);
-            isConnected = true;
+        if (isConnected) {
+            //play music
         }
     }
 
-    private void showDeviceList() {
-        LinearLayout l = new LinearLayout(this);
-        l.setOrientation(LinearLayout.VERTICAL);
-        l.setGravity(Gravity.CENTER_HORIZONTAL);
+    private void setAboutBluetooth() {
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
+        if (bluetoothAdapter == null)
+            showUnsupportedDeviceDialog();
+        else if (!bluetoothAdapter.isEnabled()) {
+            Intent i = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(i, REQUEST_ENABLE_BT);
+        } else {
+            
+        }
+
+        //isConnect is true when device connected to another device
+    }
+
+    private void showUnsupportedDeviceDialog() {
         new AlertDialog.Builder(this)
-                .setTitle("연결할 디바이스를 선택하세요.")
-                .setView(l)
+                .setTitle("지원하지 않는 기기입니다.")
+                .setMessage("현재 디바이스에서 블루투스 기능을 사용할 수 없습니다. 다른 기기로 시도하세요.")
                 .setPositiveButton("확인", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
                     }
                 })
-                .setNegativeButton("취소", new DialogInterface.OnClickListener() {
+                .setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
+                    public void onDismiss(DialogInterface dialog) {
+                        finishAffinity();
                     }
                 }).show();
     }
@@ -99,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
         if (resultCode == Activity.RESULT_OK) {
             switch (requestCode) {
                 case REQUEST_ENABLE_BT:
-                    showDeviceList();
+                    setAboutBluetooth();
                     break;
             }
         } else if (resultCode == Activity.RESULT_CANCELED) {
