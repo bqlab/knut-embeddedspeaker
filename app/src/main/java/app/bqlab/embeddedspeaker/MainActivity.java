@@ -4,9 +4,12 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Handler;
 import android.provider.Settings;
+import android.support.annotation.WorkerThread;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -16,16 +19,27 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
     final int REQUEST_ENABLE_BT = 1;
 
     BluetoothAdapter bluetoothAdapter;
+    BluetoothSocket bluetoothSocket;
+    BluetoothDevice connectedDevice;
     Set<BluetoothDevice> pairedDevices;
+    OutputStream outputStream;
+    InputStream inputStream;
+    byte[] readBuffer;
+    int readBufferPosition;
+    Thread workerThread;
 
     LinearLayout mainMusic;
     Button mainMusicProfile;
@@ -77,13 +91,8 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void playMusic() {
-        if (isConnected) {
-            //play music
-        }
-    }
-
     private void setAboutBluetooth() {
+        final UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         pairedDevices = bluetoothAdapter.getBondedDevices();
 
@@ -114,8 +123,8 @@ public class MainActivity extends AppCompatActivity {
                     .setTitle("페어링된 디바이스를 선택하세요.")
                     .setItems(c, new DialogInterface.OnClickListener() {
                         @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            //connect to selected device.
+                        public void onClick(DialogInterface dialog, final int which) {
+
                         }
                     })
                     .setNeutralButton("설정화면으로 이동", new DialogInterface.OnClickListener() {
@@ -136,6 +145,12 @@ public class MainActivity extends AppCompatActivity {
                             dialog.dismiss();
                         }
                     }).show();
+        }
+    }
+
+    private void playMusic() {
+        if (isConnected) {
+            //play music
         }
     }
 
