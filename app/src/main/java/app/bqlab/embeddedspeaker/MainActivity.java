@@ -3,8 +3,10 @@ package app.bqlab.embeddedspeaker;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -14,11 +16,16 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 public class MainActivity extends AppCompatActivity {
 
     final int REQUEST_ENABLE_BT = 1;
 
     BluetoothAdapter bluetoothAdapter;
+    Set<BluetoothDevice> pairedDevices;
 
     LinearLayout mainMusic;
     Button mainMusicProfile;
@@ -62,7 +69,10 @@ public class MainActivity extends AppCompatActivity {
         mainBarPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                playMusic();
+                if (isConnected)
+                    playMusic();
+                else
+                    setAboutBluetooth();
             }
         });
     }
@@ -75,17 +85,58 @@ public class MainActivity extends AppCompatActivity {
 
     private void setAboutBluetooth() {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        pairedDevices = bluetoothAdapter.getBondedDevices();
 
         if (bluetoothAdapter == null)
             showUnsupportedDeviceDialog();
         else if (!bluetoothAdapter.isEnabled()) {
             Intent i = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(i, REQUEST_ENABLE_BT);
-        } else {
-            
         }
+        else if (pairedDevices.size() == 0){
+            new AlertDialog.Builder(this)
+                    .setTitle("페어링된 디바이스가 없습니다.")
+                    .setMessage("블루투스 설정 화면으로 이동하여 디바이스를 페어링한 후 다시 시도하세요.")
+                    .setPositiveButton("설정화면으로 이동", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            startActivity(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS));
+                        }
+                    }).show();
+        }
+        else if (!isConnected) {
+            ArrayList<String> s = new ArrayList<>();
+            for (BluetoothDevice d : pairedDevices)
+                s.add(d.getName());
 
-        //isConnect is true when device connected to another device
+            final CharSequence[] c = s.toArray(new CharSequence[0]);
+            new AlertDialog.Builder(this)
+                    .setTitle("페어링된 디바이스를 선택하세요.")
+                    .setItems(c, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            //connect to selected device.
+                        }
+                    })
+                    .setNeutralButton("설정화면으로 이동", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            startActivity(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS));
+                        }
+                    })
+                    .setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    })
+                    .setNegativeButton("취소", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    }).show();
+        }
     }
 
     private void showUnsupportedDeviceDialog() {
@@ -122,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
                             .setPositiveButton("연결", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    playMusic();
+                                    setAboutBluetooth();
                                 }
                             })
                             .setNegativeButton("연결하지 않음", new DialogInterface.OnClickListener() {
