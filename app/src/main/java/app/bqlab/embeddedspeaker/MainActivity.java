@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
 
     Button mainBarPrev, mainBarPlay, mainBarNext;
 
-    boolean isConnected, isFinished;
+    boolean isConnected, isFinished, isPlaying;
     int playSong, setTime;
 
     @Override
@@ -172,20 +172,28 @@ public class MainActivity extends AppCompatActivity {
         });
 
         //main_bar setting
-        mainBarPlay = findViewById(R.id.main_bar_play);
-        mainBarPlay.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //playNowSong();
-                startTimer();
-            }
-        });
         mainBarPrev = findViewById(R.id.main_bar_prev);
         mainBarPrev.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 playSong--;
                 playNowSong();
+            }
+        });
+        mainBarPlay = findViewById(R.id.main_bar_play);
+        mainBarPlay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!isPlaying) {
+                    mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_pause));
+                    isPlaying = true;
+                    //playNowSong();
+                    startTimer();
+                } else {
+                    mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_play));
+                    isPlaying = false;
+                    stopTimer();
+                }
             }
         });
         mainBarNext = findViewById(R.id.main_bar_next);
@@ -357,14 +365,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startTimer() {
+        isFinished = false;
         try {
             int setH, setM, setS;
             setH = Integer.parseInt(h1.getText().toString()) * 10 + Integer.parseInt(h2.getText().toString());
             setM = Integer.parseInt(m1.getText().toString()) * 10 + Integer.parseInt(m2.getText().toString());
             setS = Integer.parseInt(s1.getText().toString()) * 10 + Integer.parseInt(s2.getText().toString());
-            if ((setM > 59) || (setS > 59))
+            if ((setM > 59) || (setS > 59)) {
                 Toast.makeText(this, "시간이 잘못 설정되었습니다.", Toast.LENGTH_LONG).show();
-            else {
+                mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_play));
+                isPlaying = false;
+            } else {
                 for (EditText e : timer) {
                     e.setTextColor(getResources().getColor(R.color.colorMagenta));
                     e.setFocusable(false);
@@ -377,16 +388,15 @@ public class MainActivity extends AppCompatActivity {
                         while (!isFinished) {
                             try {
                                 Thread.sleep(1000);
-                                Log.d("시간", Integer.toString(setTime));
                                 runOnUiThread(new Runnable() {
                                     @SuppressLint("SetTextI18n")
                                     @Override
                                     public void run() {
                                         if (setTime == 0) {
                                             for (EditText e : timer) {
+                                                stopTimer();
                                                 e.setText("");
-                                                e.setTextColor(getResources().getColor(R.color.colorWhiteDark));
-                                                e.setFocusable(true);
+                                                e.setTextColor(getResources().getColor(R.color.colorGrayDarker));
                                             }
                                             isFinished = true;
                                         } else {
@@ -415,6 +425,17 @@ public class MainActivity extends AppCompatActivity {
             }
         } catch (NumberFormatException e) {
             Toast.makeText(this, "시간이 잘못 설정되었습니다.", Toast.LENGTH_LONG).show();
+            mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_play));
+            isPlaying = false;
+        }
+    }
+
+    private void stopTimer() {
+        for (EditText e : timer) {
+            e.setTextColor(getResources().getColor(R.color.colorBlack));
+            e.setFocusableInTouchMode(true);
+            e.setFocusable(true);
+            isFinished = true;
         }
     }
 
