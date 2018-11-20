@@ -123,7 +123,6 @@ public class MainActivity extends AppCompatActivity {
         }
         //Check this device connected to other device.
         else if (!isConnected) {
-            //Get name from connected device.
             final ArrayList<String> deviceNames = new ArrayList<>();
             for (BluetoothDevice device : pairedDevices)
                 deviceNames.add(device.getName());
@@ -149,50 +148,11 @@ public class MainActivity extends AppCompatActivity {
 
                                 readBuffer = new byte[1024];
                                 readBufferPosition = 0;
+
+                                connectDevice();
                             } catch (IOException e) {
-                                showUnsupportedDeviceDialog();
+                                Toast.makeText(MainActivity.this, "디바이스에 연결할 수 없습니다.", Toast.LENGTH_LONG).show();
                             }
-
-                            //Make send data to connected device.
-                            final Handler h = new Handler();
-                            connectThread = new Thread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    while (Thread.currentThread().isInterrupted()) {
-                                        try {
-                                            isConnected = true;
-                                            int byteAvailable = inputStream.available();
-                                            if (byteAvailable > 0) {
-                                                byte[] bytes = new byte[byteAvailable];
-                                                int readBytes = inputStream.read(bytes);
-                                                for (int i = 0; i < byteAvailable; i++) {
-                                                    byte[] encodedBytes = new byte[readBufferPosition];
-                                                    System.arraycopy(readBuffer, 0, encodedBytes, 0, encodedBytes.length);
-                                                    final String receivedContent = new String(encodedBytes, "US-ASCII");
-                                                    readBufferPosition = 0;
-                                                    h.post(new Runnable() {
-                                                        @Override
-                                                        public void run() {
-                                                            //Here is for access main thread.
-                                                            String s = "수신: " + receivedContent;
-                                                            Toast.makeText(MainActivity.this, s, Toast.LENGTH_SHORT).show();
-                                                        }
-                                                    });
-                                                }
-                                            }
-                                        } catch (IOException e) {
-                                            e.printStackTrace();
-                                        }
-                                        try {
-                                            Thread.sleep(1000);
-                                        } catch (InterruptedException e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                }
-                            });
-
-                            connectThread.start();
                         }
                     })
                     .setNeutralButton("설정화면으로 이동", new DialogInterface.OnClickListener() {
@@ -214,6 +174,48 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }).show();
         }
+    }
+
+    private void connectDevice() {
+        final Handler h = new Handler();
+        connectThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (Thread.currentThread().isInterrupted()) {
+                    try {
+                        isConnected = true;
+                        int byteAvailable = inputStream.available();
+                        if (byteAvailable > 0) {
+                            byte[] bytes = new byte[byteAvailable];
+                            int readBytes = inputStream.read(bytes);
+                            for (int i = 0; i < byteAvailable; i++) {
+                                byte[] encodedBytes = new byte[readBufferPosition];
+                                System.arraycopy(readBuffer, 0, encodedBytes, 0, encodedBytes.length);
+                                final String receivedContent = new String(encodedBytes, "US-ASCII");
+                                readBufferPosition = 0;
+                                h.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        //Here is for access main thread.
+                                        String s = "수신: " + receivedContent;
+                                        Toast.makeText(MainActivity.this, s, Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        connectThread.start();
     }
 
     private void playMusic(int playSong) {
@@ -249,7 +251,7 @@ public class MainActivity extends AppCompatActivity {
                 .setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialog) {
-                        finishAffinity();
+
                     }
                 }).show();
     }
