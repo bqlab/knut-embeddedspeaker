@@ -10,14 +10,15 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Handler;
 import android.provider.Settings;
-import android.support.annotation.WorkerThread;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -27,7 +28,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -56,12 +56,14 @@ public class MainActivity extends AppCompatActivity {
     Button mainMusicProfile;
     TextView mainMusicName, mainMusicMusician;
 
+    ArrayList<EditText> timer;
+    EditText h1, h2, m1, m2, s1, s2;
     Switch mainBodyFndSwitch, mainBodyMotorSwitch;
 
     Button mainBarPrev, mainBarPlay, mainBarNext;
 
-    boolean isConnected;
-    int playSong;
+    boolean isConnected, isFinished;
+    int playSong, setTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,13 +88,46 @@ public class MainActivity extends AppCompatActivity {
         mainMusicProfile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                playMusic();
+                playNowSong();
             }
         });
         mainMusicName = findViewById(R.id.main_music_name);
         mainMusicMusician = findViewById(R.id.main_music_musician);
 
         //main_body setting
+        timer = new ArrayList<>();
+        h1 = findViewById(R.id.main_body_timer_h1);
+        h2 = findViewById(R.id.main_body_timer_h2);
+        m1 = findViewById(R.id.main_body_timer_m1);
+        m2 = findViewById(R.id.main_body_timer_m2);
+        s1 = findViewById(R.id.main_body_timer_s1);
+        s2 = findViewById(R.id.main_body_timer_s2);
+        timer.add(h1);
+        timer.add(h2);
+        timer.add(m1);
+        timer.add(m2);
+        timer.add(s1);
+        timer.add(s2);
+        for (int i = 0; i < timer.size(); i++) {
+            final int finalI = i;
+            timer.get(i).addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+                }
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                    if (!(finalI == 5) && !timer.get(finalI).getText().toString().equals(""))
+                        timer.get(finalI + 1).requestFocus();
+                }
+            });
+        }
         mainBodyFndSwitch = findViewById(R.id.main_body_fnd_switch);
         mainBodyFndSwitch.setChecked(getSharedPreferences("setting", MODE_PRIVATE).getBoolean("fnd", true));
         mainBodyFndSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -141,7 +176,8 @@ public class MainActivity extends AppCompatActivity {
         mainBarPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                playMusic();
+                //playNowSong();
+                startTimer();
             }
         });
         mainBarPrev = findViewById(R.id.main_bar_prev);
@@ -149,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 playSong--;
-                playMusic();
+                playNowSong();
             }
         });
         mainBarNext = findViewById(R.id.main_bar_next);
@@ -157,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 playSong++;
-                playMusic();
+                playNowSong();
             }
         });
     }
@@ -286,7 +322,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @SuppressLint("SetTextI18n")
-    private void playMusic() {
+    private void playNowSong() {
         if (isConnected) {
             try {
                 switch (playSong) {
@@ -317,6 +353,68 @@ public class MainActivity extends AppCompatActivity {
             }
         } else {
             setAboutBluetooth();
+        }
+    }
+
+    private void startTimer() {
+        try {
+            int setH, setM, setS;
+            setH = Integer.parseInt(h1.getText().toString()) * 10 + Integer.parseInt(h2.getText().toString());
+            setM = Integer.parseInt(m1.getText().toString()) * 10 + Integer.parseInt(m2.getText().toString());
+            setS = Integer.parseInt(s1.getText().toString()) * 10 + Integer.parseInt(s2.getText().toString());
+            if ((setM > 59) || (setS > 59))
+                Toast.makeText(this, "시간이 잘못 설정되었습니다.", Toast.LENGTH_LONG).show();
+            else {
+                for (EditText e : timer) {
+                    e.setTextColor(getResources().getColor(R.color.colorMagenta));
+                    e.setFocusable(false);
+                }
+
+                setTime = (setH * 3600) + (setM * 60) + setS;
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        while (!isFinished) {
+                            try {
+                                Thread.sleep(1000);
+                                Log.d("시간", Integer.toString(setTime));
+                                runOnUiThread(new Runnable() {
+                                    @SuppressLint("SetTextI18n")
+                                    @Override
+                                    public void run() {
+                                        if (setTime == 0) {
+                                            for (EditText e : timer) {
+                                                e.setText("");
+                                                e.setTextColor(getResources().getColor(R.color.colorWhiteDark));
+                                                e.setFocusable(true);
+                                            }
+                                            isFinished = true;
+                                        } else {
+                                            setTime--;
+                                            int logTime = setTime;
+                                            h1.setText(Integer.toString(logTime / (3600 * 10)));
+                                            logTime -= Integer.parseInt(h1.getText().toString()) * (3600 * 10);
+                                            h2.setText(Integer.toString(logTime / 3600));
+                                            logTime -= Integer.parseInt(h2.getText().toString()) * 3600;
+                                            m1.setText(Integer.toString(logTime / (60 * 10)));
+                                            logTime -= Integer.parseInt(m1.getText().toString()) * (60 * 10);
+                                            m2.setText(Integer.toString(logTime / 60));
+                                            logTime -= Integer.parseInt(m2.getText().toString()) * 60;
+                                            s1.setText(Integer.toString(logTime / 10));
+                                            logTime -= Integer.parseInt(s1.getText().toString()) * 10;
+                                            s2.setText(Integer.toString(logTime));
+                                        }
+                                    }
+                                });
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }).start();
+            }
+        } catch (NumberFormatException e) {
+            Toast.makeText(this, "시간이 잘못 설정되었습니다.", Toast.LENGTH_LONG).show();
         }
     }
 
