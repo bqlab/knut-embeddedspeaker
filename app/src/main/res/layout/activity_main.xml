@@ -31,7 +31,7 @@
             android:layout_marginTop="10dp"
             android:gravity="center"
             android:text="@string/main_music_name_none"
-            android:textColor="@color/colorGrayDarker"
+            android:textColor="@color/colorBlack"
             android:textSize="14sp"
             android:textStyle="bold" />
 
@@ -41,7 +41,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:text="@string/main_music_musician_none"
-            android:textColor="@color/colorGrayDarker"
+            android:textColor="@color/colorMagenta"
             android:textSize="14sp" />
     </LinearLayout>
 
@@ -229,6 +229,7 @@
                     </LinearLayout>
 
                     <Switch
+                        android:id="@+id/main_body_fnd_switch"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
@@ -269,6 +270,7 @@
                     </LinearLayout>
 
                     <Switch
+                        android:id="@+id/main_body_motor_switch"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"

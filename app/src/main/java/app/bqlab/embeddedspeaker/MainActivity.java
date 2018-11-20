@@ -1,5 +1,6 @@
 package app.bqlab.embeddedspeaker;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -16,7 +17,9 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.LinearLayout;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,10 +33,14 @@ import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
-    final int REQUEST_ENABLE_BT = 101;
     final int SONG_BBIBBI = 1;
     final int SONG_TRAVEL = 2;
     final int SONG_PHONECERT = 3;
+    final int SETTING_FND_OFF = 4;
+    final int SETTING_FND_ON = 5;
+    final int SETTING_MOTOR_OFF = 6;
+    final int SETTING_MOTOR_ON = 7;
+    final int REQUEST_ENABLE_BT = 8;
 
     BluetoothAdapter bluetoothAdapter;
     BluetoothSocket bluetoothSocket;
@@ -49,15 +56,22 @@ public class MainActivity extends AppCompatActivity {
     Button mainMusicProfile;
     TextView mainMusicName, mainMusicMusician;
 
+    Switch mainBodyFndSwitch, mainBodyMotorSwitch;
+
     Button mainBarPrev, mainBarPlay, mainBarNext;
 
     boolean isConnected;
+    int playSong;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         init();
+        mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music1));
+        mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile1));
+        mainMusicName.setText("삐삐");
+        mainMusicMusician.setText("아이유");
     }
 
     @Override
@@ -67,6 +81,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void init() {
+        //Data setting
+        playSong = SONG_BBIBBI;
+
         //main_music setting
         mainMusic = findViewById(R.id.main_music);
         mainMusicProfile = findViewById(R.id.main_music_profile);
@@ -74,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (isConnected)
-                    playMusic(SONG_BBIBBI);
+                    playMusic();
                 else
                     setAboutBluetooth();
             }
@@ -82,13 +99,59 @@ public class MainActivity extends AppCompatActivity {
         mainMusicName = findViewById(R.id.main_music_name);
         mainMusicMusician = findViewById(R.id.main_music_musician);
 
+        //main_body setting
+        mainBodyFndSwitch = findViewById(R.id.main_body_fnd_switch);
+        mainBodyFndSwitch.setChecked(getSharedPreferences("setting", MODE_PRIVATE).getBoolean("fnd", true));
+        mainBodyFndSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (!isConnected) {
+                    setAboutBluetooth();
+                    mainBodyFndSwitch.setChecked(getSharedPreferences("setting", MODE_PRIVATE).getBoolean("fnd", true));
+                }
+                else {
+                    getSharedPreferences("setting", MODE_PRIVATE).edit().putBoolean("fnd", isChecked).apply();
+                    try {
+                        if (getSharedPreferences("setting", MODE_PRIVATE).getBoolean("fnd", true))
+                            outputStream.write(SETTING_FND_ON);
+                        else
+                            outputStream.write(SETTING_FND_OFF);
+                    } catch (IOException e) {
+                        Toast.makeText(MainActivity.this, "디바이스와의 연결이 끊겼습니다.", Toast.LENGTH_LONG).show();
+                    }
+                }
+            }
+        });
+        mainBodyMotorSwitch = findViewById(R.id.main_body_motor_switch);
+        mainBodyMotorSwitch.setChecked(getSharedPreferences("setting", MODE_PRIVATE).getBoolean("motor", true));
+        mainBodyMotorSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (!isConnected) {
+                    setAboutBluetooth();
+                    mainBodyMotorSwitch.setChecked(getSharedPreferences("setting", MODE_PRIVATE).getBoolean("fnd", true));
+                }
+                else {
+                    getSharedPreferences("setting", MODE_PRIVATE).edit().putBoolean("motor", isChecked).apply();
+                    try {
+                        if (getSharedPreferences("setting", MODE_PRIVATE).getBoolean("motor", true))
+                            outputStream.write(SETTING_MOTOR_ON);
+                        else
+                            outputStream.write(SETTING_MOTOR_OFF);
+                    } catch (IOException e) {
+                        Toast.makeText(MainActivity.this, "디바이스와의 연결이 끊겼습니다.", Toast.LENGTH_LONG).show();
+                    }
+                }
+            }
+        });
+
         //main_bar setting
         mainBarPlay = findViewById(R.id.main_bar_play);
         mainBarPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (isConnected)
-                    playMusic(SONG_BBIBBI);
+                    playMusic();
                 else
                     setAboutBluetooth();
             }
@@ -218,22 +281,35 @@ public class MainActivity extends AppCompatActivity {
         connectThread.start();
     }
 
-    private void playMusic(int playSong) {
+    @SuppressLint("SetTextI18n")
+    private void playMusic() {
         if (isConnected) {
             try {
                 switch (playSong) {
                     case SONG_BBIBBI:
                         outputStream.write(SONG_BBIBBI);
+                        mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music1));
+                        mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile1));
+                        mainMusicName.setText("삐삐");
+                        mainMusicMusician.setText("아이유");
                         break;
                     case SONG_TRAVEL:
                         outputStream.write(SONG_TRAVEL);
+                        mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music2));
+                        mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile2));
+                        mainMusicName.setText("여행");
+                        mainMusicMusician.setText("볼빨간사춘기");
                         break;
                     case SONG_PHONECERT:
                         outputStream.write(SONG_PHONECERT);
+                        mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music3));
+                        mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile3));
+                        mainMusicName.setText("폰서트");
+                        mainMusicMusician.setText("10CM");
                         break;
                 }
             } catch (IOException e) {
-                showUnsupportedDeviceDialog();
+                Toast.makeText(MainActivity.this, "디바이스와의 연결이 끊겼습니다.", Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -251,7 +327,7 @@ public class MainActivity extends AppCompatActivity {
                 .setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialog) {
-
+                        finishAffinity();
                     }
                 }).show();
     }
