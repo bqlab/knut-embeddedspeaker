@@ -12,6 +12,7 @@ import android.provider.Settings;
 import android.support.annotation.WorkerThread;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
@@ -29,7 +30,10 @@ import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
-    final int REQUEST_ENABLE_BT = 1;
+    final int REQUEST_ENABLE_BT = 101;
+    final int SONG_BBIBBI = 1;
+    final int SONG_TRAVEL = 2;
+    final int SONG_PHONECERT = 3;
 
     BluetoothAdapter bluetoothAdapter;
     BluetoothSocket bluetoothSocket;
@@ -39,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
     InputStream inputStream;
     byte[] readBuffer;
     int readBufferPosition;
-    Thread workerThread;
+    Thread connectThread;
 
     LinearLayout mainMusic;
     Button mainMusicProfile;
@@ -70,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (isConnected)
-                    playMusic();
+                    playMusic(SONG_BBIBBI);
                 else
                     setAboutBluetooth();
             }
@@ -84,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (isConnected)
-                    playMusic();
+                    playMusic(SONG_BBIBBI);
                 else
                     setAboutBluetooth();
             }
@@ -92,17 +96,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setAboutBluetooth() {
+        //Necessary objects.
         final UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         pairedDevices = bluetoothAdapter.getBondedDevices();
 
+        //Check the device support bluetooth.
         if (bluetoothAdapter == null)
             showUnsupportedDeviceDialog();
+            //Check bluetooth activated.
         else if (!bluetoothAdapter.isEnabled()) {
             Intent i = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(i, REQUEST_ENABLE_BT);
         }
-        else if (pairedDevices.size() == 0){
+        //Check this device have paired devices.
+        else if (pairedDevices.size() == 0) {
             new AlertDialog.Builder(this)
                     .setTitle("페어링된 디바이스가 없습니다.")
                     .setMessage("블루투스 설정 화면으로 이동하여 디바이스를 페어링한 후 다시 시도하세요.")
@@ -113,18 +121,78 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }).show();
         }
+        //Check this device connected to other device.
         else if (!isConnected) {
-            ArrayList<String> s = new ArrayList<>();
-            for (BluetoothDevice d : pairedDevices)
-                s.add(d.getName());
+            //Get name from connected device.
+            final ArrayList<String> deviceNames = new ArrayList<>();
+            for (BluetoothDevice device : pairedDevices)
+                deviceNames.add(device.getName());
 
-            final CharSequence[] c = s.toArray(new CharSequence[0]);
+            //Find the connected device object.
+            final CharSequence[] items = deviceNames.toArray(new CharSequence[0]);
             new AlertDialog.Builder(this)
                     .setTitle("페어링된 디바이스를 선택하세요.")
-                    .setItems(c, new DialogInterface.OnClickListener() {
+                    .setItems(items, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, final int which) {
+                            //Make bluetooth socket.
+                            for (BluetoothDevice device : pairedDevices)
+                                if (device.getName().equals(items[which].toString()))
+                                    connectedDevice = device;
 
+                            try {
+                                bluetoothSocket = connectedDevice.createRfcommSocketToServiceRecord(uuid);
+                                bluetoothSocket.connect();
+
+                                outputStream = bluetoothSocket.getOutputStream();
+                                inputStream = bluetoothSocket.getInputStream();
+
+                                readBuffer = new byte[1024];
+                                readBufferPosition = 0;
+                            } catch (IOException e) {
+                                showUnsupportedDeviceDialog();
+                            }
+
+                            //Make send data to connected device.
+                            final Handler h = new Handler();
+                            connectThread = new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    while (Thread.currentThread().isInterrupted()) {
+                                        try {
+                                            isConnected = true;
+                                            int byteAvailable = inputStream.available();
+                                            if (byteAvailable > 0) {
+                                                byte[] bytes = new byte[byteAvailable];
+                                                int readBytes = inputStream.read(bytes);
+                                                for (int i = 0; i < byteAvailable; i++) {
+                                                    byte[] encodedBytes = new byte[readBufferPosition];
+                                                    System.arraycopy(readBuffer, 0, encodedBytes, 0, encodedBytes.length);
+                                                    final String receivedContent = new String(encodedBytes, "US-ASCII");
+                                                    readBufferPosition = 0;
+                                                    h.post(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            //Here is for access main thread.
+                                                            String s = "수신: " + receivedContent;
+                                                            Toast.makeText(MainActivity.this, s, Toast.LENGTH_SHORT).show();
+                                                        }
+                                                    });
+                                                }
+                                            }
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+                                        try {
+                                            Thread.sleep(1000);
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }
+                            });
+
+                            connectThread.start();
                         }
                     })
                     .setNeutralButton("설정화면으로 이동", new DialogInterface.OnClickListener() {
@@ -148,9 +216,23 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void playMusic() {
+    private void playMusic(int playSong) {
         if (isConnected) {
-            //play music
+            try {
+                switch (playSong) {
+                    case SONG_BBIBBI:
+                        outputStream.write(SONG_BBIBBI);
+                        break;
+                    case SONG_TRAVEL:
+                        outputStream.write(SONG_TRAVEL);
+                        break;
+                    case SONG_PHONECERT:
+                        outputStream.write(SONG_PHONECERT);
+                        break;
+                }
+            } catch (IOException e) {
+                showUnsupportedDeviceDialog();
+            }
         }
     }
 
