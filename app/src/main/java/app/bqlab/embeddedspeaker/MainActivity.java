@@ -189,11 +189,8 @@ public class MainActivity extends AppCompatActivity {
                     isPlaying = true;
                     //playNowSong();
                     startTimer();
-                } else {
-                    mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_play));
-                    isPlaying = false;
+                } else
                     stopTimer();
-                }
             }
         });
         mainBarNext = findViewById(R.id.main_bar_next);
@@ -386,21 +383,18 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         while (!isFinished) {
-                            try {
-                                Thread.sleep(1000);
                                 runOnUiThread(new Runnable() {
                                     @SuppressLint("SetTextI18n")
                                     @Override
                                     public void run() {
                                         if (setTime == 0) {
                                             for (EditText e : timer) {
-                                                stopTimer();
-                                                e.setText("");
                                                 e.setTextColor(getResources().getColor(R.color.colorGrayDarker));
+                                                e.setText("");
+                                                stopTimer();
                                             }
                                             isFinished = true;
                                         } else {
-                                            setTime--;
                                             int logTime = setTime;
                                             h1.setText(Integer.toString(logTime / (3600 * 10)));
                                             logTime -= Integer.parseInt(h1.getText().toString()) * (3600 * 10);
@@ -414,8 +408,11 @@ public class MainActivity extends AppCompatActivity {
                                             logTime -= Integer.parseInt(s1.getText().toString()) * 10;
                                             s2.setText(Integer.toString(logTime));
                                         }
+                                        setTime--;
                                     }
                                 });
+                            try {
+                                Thread.sleep(1000);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
@@ -435,8 +432,10 @@ public class MainActivity extends AppCompatActivity {
             e.setTextColor(getResources().getColor(R.color.colorBlack));
             e.setFocusableInTouchMode(true);
             e.setFocusable(true);
-            isFinished = true;
         }
+        mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_play));
+        isPlaying = false;
+        isFinished = true;
     }
 
     private void showUnsupportedDeviceDialog() {
