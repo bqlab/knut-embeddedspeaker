@@ -68,10 +68,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         init();
-        mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music1));
-        mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile1));
-        mainMusicName.setText("삐삐");
-        mainMusicMusician.setText("아이유");
     }
 
     @Override
@@ -90,10 +86,7 @@ public class MainActivity extends AppCompatActivity {
         mainMusicProfile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isConnected)
-                    playMusic();
-                else
-                    setAboutBluetooth();
+                playMusic();
             }
         });
         mainMusicName = findViewById(R.id.main_music_name);
@@ -108,8 +101,7 @@ public class MainActivity extends AppCompatActivity {
                 if (!isConnected) {
                     setAboutBluetooth();
                     mainBodyFndSwitch.setChecked(getSharedPreferences("setting", MODE_PRIVATE).getBoolean("fnd", true));
-                }
-                else {
+                } else {
                     getSharedPreferences("setting", MODE_PRIVATE).edit().putBoolean("fnd", isChecked).apply();
                     try {
                         if (getSharedPreferences("setting", MODE_PRIVATE).getBoolean("fnd", true))
@@ -130,8 +122,7 @@ public class MainActivity extends AppCompatActivity {
                 if (!isConnected) {
                     setAboutBluetooth();
                     mainBodyMotorSwitch.setChecked(getSharedPreferences("setting", MODE_PRIVATE).getBoolean("fnd", true));
-                }
-                else {
+                } else {
                     getSharedPreferences("setting", MODE_PRIVATE).edit().putBoolean("motor", isChecked).apply();
                     try {
                         if (getSharedPreferences("setting", MODE_PRIVATE).getBoolean("motor", true))
@@ -150,10 +141,23 @@ public class MainActivity extends AppCompatActivity {
         mainBarPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isConnected)
-                    playMusic();
-                else
-                    setAboutBluetooth();
+                playMusic();
+            }
+        });
+        mainBarPrev = findViewById(R.id.main_bar_prev);
+        mainBarPrev.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                playSong--;
+                playMusic();
+            }
+        });
+        mainBarNext = findViewById(R.id.main_bar_next);
+        mainBarNext.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                playSong++;
+                playMusic();
             }
         });
     }
@@ -311,6 +315,8 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e) {
                 Toast.makeText(MainActivity.this, "디바이스와의 연결이 끊겼습니다.", Toast.LENGTH_LONG).show();
             }
+        } else {
+            setAboutBluetooth();
         }
     }
 
