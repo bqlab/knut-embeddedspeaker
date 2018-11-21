@@ -205,9 +205,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void setAboutBluetooth() {
         //Necessary objects.
-        final UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        pairedDevices = bluetoothAdapter.getBondedDevices();
+        try {
+            final UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            pairedDevices = bluetoothAdapter.getBondedDevices();
+        } catch (NullPointerException e) {
+            showUnsupportedDeviceDialog();
+        }
 
         //Check the device support bluetooth.
         if (bluetoothAdapter == null)
