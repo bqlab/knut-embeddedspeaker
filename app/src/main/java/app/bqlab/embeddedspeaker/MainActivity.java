@@ -375,7 +375,7 @@ public class MainActivity extends AppCompatActivity {
             setH = Integer.parseInt(h1.getText().toString()) * 10 + Integer.parseInt(h2.getText().toString());
             setM = Integer.parseInt(m1.getText().toString()) * 10 + Integer.parseInt(m2.getText().toString());
             setS = Integer.parseInt(s1.getText().toString()) * 10 + Integer.parseInt(s2.getText().toString());
-            if ((setM > 59) || (setS > 59)) {
+            if ((setH > 0) || (setM > 0) || (setS > 59)) {
                 Toast.makeText(this, "시간이 잘못 설정되었습니다.", Toast.LENGTH_LONG).show();
                 mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_play));
                 isPlaying = false;
@@ -390,34 +390,34 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         while (!isFinished) {
-                                runOnUiThread(new Runnable() {
-                                    @SuppressLint("SetTextI18n")
-                                    @Override
-                                    public void run() {
-                                        if (setTime == 0) {
-                                            for (EditText e : timer) {
-                                                e.setTextColor(getResources().getColor(R.color.colorGrayDarker));
-                                                e.setText("");
-                                                stopTimer();
-                                            }
-                                            isFinished = true;
-                                        } else {
-                                            int logTime = setTime;
-                                            h1.setText(Integer.toString(logTime / (3600 * 10)));
-                                            logTime -= Integer.parseInt(h1.getText().toString()) * (3600 * 10);
-                                            h2.setText(Integer.toString(logTime / 3600));
-                                            logTime -= Integer.parseInt(h2.getText().toString()) * 3600;
-                                            m1.setText(Integer.toString(logTime / (60 * 10)));
-                                            logTime -= Integer.parseInt(m1.getText().toString()) * (60 * 10);
-                                            m2.setText(Integer.toString(logTime / 60));
-                                            logTime -= Integer.parseInt(m2.getText().toString()) * 60;
-                                            s1.setText(Integer.toString(logTime / 10));
-                                            logTime -= Integer.parseInt(s1.getText().toString()) * 10;
-                                            s2.setText(Integer.toString(logTime));
+                            runOnUiThread(new Runnable() {
+                                @SuppressLint("SetTextI18n")
+                                @Override
+                                public void run() {
+                                    if (setTime == 0) {
+                                        for (EditText e : timer) {
+                                            e.setTextColor(getResources().getColor(R.color.colorGrayDarker));
+                                            e.setText("");
+                                            stopTimer();
                                         }
-                                        setTime--;
+                                        isFinished = true;
+                                    } else {
+                                        int logTime = setTime;
+                                        h1.setText(Integer.toString(logTime / (3600 * 10)));
+                                        logTime -= Integer.parseInt(h1.getText().toString()) * (3600 * 10);
+                                        h2.setText(Integer.toString(logTime / 3600));
+                                        logTime -= Integer.parseInt(h2.getText().toString()) * 3600;
+                                        m1.setText(Integer.toString(logTime / (60 * 10)));
+                                        logTime -= Integer.parseInt(m1.getText().toString()) * (60 * 10);
+                                        m2.setText(Integer.toString(logTime / 60));
+                                        logTime -= Integer.parseInt(m2.getText().toString()) * 60;
+                                        s1.setText(Integer.toString(logTime / 10));
+                                        logTime -= Integer.parseInt(s1.getText().toString()) * 10;
+                                        s2.setText(Integer.toString(logTime));
                                     }
-                                });
+                                    setTime--;
+                                }
+                            });
                             try {
                                 Thread.sleep(1000);
                             } catch (InterruptedException e) {
