@@ -49,9 +49,9 @@ public class MainActivity extends AppCompatActivity {
     Set<BluetoothDevice> pairedDevices;
     OutputStream outputStream;
     InputStream inputStream;
+    Thread connectThread;
     byte[] readBuffer;
     int readBufferPosition;
-    Thread connectThread;
 
     LinearLayout mainMusic;
     Button mainMusicProfile;
