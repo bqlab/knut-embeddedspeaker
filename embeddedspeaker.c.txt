@@ -1,0 +1,264 @@
+
+#include <stdio.h>
+#include <stdint.h>
+#include <wiringPi.h>
+#include <errno.h>
+#include <string.h>
+#include <wiringSerial.h>
+
+
+#define NOTE_C1  262
+#define NOTE_CS1 277
+#define NOTE_D1  294
+#define NOTE_DS1 311
+#define NOTE_E1  330
+#define NOTE_F1  349
+#define NOTE_FS1 370
+#define NOTE_G1  392
+#define NOTE_GS1 415
+#define NOTE_A1  440
+#define NOTE_AS1 466
+#define NOTE_B1  494
+#define NOTE_C2  523
+#define NOTE_CS2 554
+#define NOTE_D2  587
+#define NOTE_DS2 622
+#define NOTE_E2  659
+#define NOTE_F2  698
+#define NOTE_FS2 740
+#define NOTE_G2  784
+#define NOTE_GS2 831
+#define NOTE_A2  880
+#define NOTE_AS2 932
+#define NOTE_B2  988
+
+
+void uart_ch(char ch);
+void uart_str(char *str);
+
+
+int seg [10][7] = { {0, 0, 0, 0, 0, 0, 1},
+  {1, 0, 0, 1, 1, 1, 1},
+  {0, 0, 1, 0, 0, 1, 0},
+  {0, 0, 0, 0, 1, 1, 0},
+  {1, 0, 0, 1, 1, 0, 0},
+  {0, 1, 0, 0, 1, 0, 0},
+  {0, 1, 0, 0, 0, 0, 0},
+  {0, 0, 0, 1, 1, 1, 1},
+  {0, 0, 0, 0, 0, 0, 0},
+  {0, 0, 0, 0, 1, 0, 0}
+};
+
+int segPin0[7] = {8, 9, 7, 0, 2, 3, 12};
+int segPin1[7] = {13, 14, 21, 22, 23, 24, 25};
+int motor = 4;
+int piezo = 1;
+int bt = 0;
+int choose_song = 0;
+int power_fnd = 0;
+uint32_t fnd_count_time = 0;
+int power_motor = 0;
+int front = 0;
+int back = 0;
+int slave_id;
+uint32_t fnd_timer = 0;
+uint32_t fnd_time = 0;
+uint32_t song_timer = 0;
+uint32_t song_timer_pre = 0;
+uint32_t motor_timer = 0;
+int motor_first= 1;
+int wlen;
+int tempo = 150;
+int fnd_count = 0;
+
+
+int BBIBBI[16] = {NOTE_D1, NOTE_D1, NOTE_D1, NOTE_E1, NOTE_G1, NOTE_B1, NOTE_G1,  NOTE_A1,  NOTE_B1,  NOTE_A1,  NOTE_B1, NOTE_G1, NOTE_G1};
+int Travel[25] = {NOTE_G1, NOTE_A1, NOTE_C2, NOTE_C2, NOTE_A1, NOTE_G1, NOTE_E1, NOTE_E1, NOTE_D1, NOTE_C1, NOTE_D1, NOTE_E1,
+                  NOTE_G1, NOTE_A1, NOTE_C2, NOTE_C1, NOTE_A1, NOTE_G1, NOTE_E1, NOTE_D1, NOTE_D1, NOTE_D1, NOTE_C1, NOTE_G1, NOTE_E1
+                 };
+int Phonecert[24] = {NOTE_E1, NOTE_E1, NOTE_E1, NOTE_F1, NOTE_A1, NOTE_B1, NOTE_C2, NOTE_E1, NOTE_F1, NOTE_A1, NOTE_F1, NOTE_E1,
+                     NOTE_E1, NOTE_E1, NOTE_E1, NOTE_F1, NOTE_A1, NOTE_B1, NOTE_C2, NOTE_E1, NOTE_F1, NOTE_A1, NOTE_F1, NOTE_C1
+                    };
+
+
+
+
+
+
+
+void myTone(int pin, uint16_t frequency, uint16_t duration);
+void song_BBIBBI();
+void song_Travel();
+void song_Phonecert();
+void printSeg(int a, int b);
+
+
+
+int main() {
+
+  wiringPiSetup();
+
+
+  for (int i = 0; i < 7; i++) {
+    pinMode(segPin0[i], OUTPUT);
+    pinMode(segPin1[i], OUTPUT);
+  }
+
+  pinMode(motor, OUTPUT);
+  pinMode(piezo, OUTPUT);
+  digitalWrite(motor, LOW);
+  delay(500);
+  
+
+
+  int fd;
+  if ((fd == serialOpen("/dev/rtcomm0", 9600)) < 0)
+  {
+       printf("serial open error\r\n");
+  }
+
+  printf("Main\r\n");
+  bt =7;
+
+  while (1) {
+
+    if(serialDataAvail(fd))
+    {
+       bt = serialGetchar (fd);
+    }
+
+    if (bt == 1)
+      choose_song = 1;
+    else if (bt == 2)
+      choose_song = 2;
+    else if (bt == 3)
+      choose_song = 3;
+    else if (bt == 4)
+      power_fnd = 0;
+    else if (bt == 6)
+      power_motor = 0;
+    else if (bt == 7)
+      power_motor = 1;
+    else if (bt > 7 ) {
+     power_fnd = 1;
+      fnd_time = bt;
+  }
+
+    switch (choose_song) {
+      case 1:
+        song_BBIBBI();
+        bt  = 0;
+        break;
+      case 2:
+        song_Travel();
+        bt  = 0;
+        break;
+      case 3:
+        song_Phonecert();
+        bt  = 0;
+        break;
+      default:
+        break;
+    }
+    choose_song = 0;
+
+    if (power_motor == 1) {
+      motor_timer = micros();
+      motor_first = 1;
+      power_motor = 0;
+      bt  = 0;
+    }
+
+    if ( ((micros() - motor_timer) < 10000000) && (motor_first == 1))  {
+      digitalWrite(motor, HIGH);
+    }
+    else {
+      digitalWrite(motor, LOW);
+      motor_first = 0;
+    }
+
+    if (power_fnd == 1) {
+      fnd_timer = micros();
+      fnd_count_time = micros();
+      power_fnd = 0;
+      fnd_count = bt;
+      fnd_time = bt * 1000000;
+      bt = 0;
+    }
+
+    if ((micros() - fnd_timer) < fnd_time)  {
+      if ( (micros() - fnd_count_time) > 1000000 ) {
+        fnd_count_time = micros();
+        fnd_count -= 1;
+      }
+      if (fnd_count < 0) fnd_count = 0;
+
+      if (fnd_count < 10) {
+        front = 0;
+        back = fnd_count;
+      }
+      else {
+        front = fnd_count / 10;
+        back = fnd_count % 10;
+      }
+
+      printf("%d %d\r\n",front, back);
+      printSeg(front, back);
+    }
+    else {
+      for (int i = 0; i < 7; i++) {
+        digitalWrite(segPin0[i], 0);
+        digitalWrite(segPin1[i], 0);
+      }
+    }
+  }
+
+  return 0;
+}
+
+
+
+void myTone(int pin, uint16_t frequency, uint16_t duration) {
+  unsigned long startTime = millis();
+  unsigned long halfPeriod = 1000000L / frequency / 2;
+  pinMode(pin, OUTPUT);
+  while (millis() - startTime < duration) {
+    digitalWrite(pin, HIGH);
+    delayMicroseconds(halfPeriod);
+    digitalWrite(pin, LOW);
+    delayMicroseconds(halfPeriod);
+  }
+  pinMode(pin, INPUT);
+}
+
+void song_BBIBBI() {
+  for (int i = 0; i < 16; i++) {
+    myTone (piezo, BBIBBI[i], tempo);
+    delay(300);
+  }
+}
+
+void song_Travel() {
+  for (int i = 0; i < 25; i++) {
+    myTone (piezo, Travel[i], tempo);
+    delay(300);
+  }
+}
+
+void song_Phonecert() {
+  for (int i = 0; i < 24; i++) {
+    myTone (piezo, Phonecert[i], tempo);
+    delay(300);
+  }
+}
+
+void printSeg(int a, int b) {
+  for (int i = 0; i < 7; i++) {
+    digitalWrite(segPin0[i], seg[a][i]);
+  }
+  for (int i = 0; i < 7; i++) {
+    digitalWrite(segPin1[i], seg[b][i]);
+  }
+}
+
+
