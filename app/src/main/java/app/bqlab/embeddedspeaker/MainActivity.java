@@ -8,7 +8,11 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.media.Image;
 import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -19,6 +23,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -48,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private ConnectionManager connectionManager;
 
     LinearLayout mainMusic;
-    Button mainMusicProfile;
+    ImageView mainMusicProfile;
     TextView mainMusicName, mainMusicMusician;
 
     EditText h1, h2, m1, m2, s1, s2;
@@ -56,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
 
     Button mainBarPrev, mainBarPlay, mainBarNext;
 
-    boolean isConnected, isFinished, isPlaying;
+    boolean isConnected, isFinished, isRunning;
     int currentSong, setTime;
 
     Timer timer;
@@ -84,13 +89,15 @@ public class MainActivity extends AppCompatActivity {
         mainMusicProfile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                playCurrentSong();
+                if (!isConnected)
+                    playCurrentSong();
             }
         });
         mainMusicName = findViewById(R.id.main_music_name);
         mainMusicMusician = findViewById(R.id.main_music_musician);
 
         //main_body setting
+        timer = new Timer();
         h1 = findViewById(R.id.main_body_timer_h1);
         h2 = findViewById(R.id.main_body_timer_h2);
         m1 = findViewById(R.id.main_body_timer_m1);
@@ -168,14 +175,17 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 currentSong--;
-                playCurrentSong();
+                showCurrentSong();
             }
         });
         mainBarPlay = findViewById(R.id.main_bar_play);
         mainBarPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                playCurrentSong();
+                if (timer.ready()) {
+                    showCurrentSong();
+                    playCurrentSong();
+                }
             }
         });
         mainBarNext = findViewById(R.id.main_bar_next);
@@ -183,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 currentSong++;
-                playCurrentSong();
+                showCurrentSong();
             }
         });
     }
@@ -198,7 +208,7 @@ public class MainActivity extends AppCompatActivity {
             //Check the device support bluetooth.
             if (bluetoothAdapter == null)
                 showUnsupportedDeviceDialog();
-            //Check bluetooth activated.
+                //Check bluetooth activated.
             else if (!bluetoothAdapter.isEnabled()) {
                 Intent i = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 startActivityForResult(i, REQUEST_ENABLE_BT);
@@ -256,40 +266,56 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @SuppressLint("SetTextI18n")
-    private void playCurrentSong() {
-        if (!isPlaying) {
-            mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_pause));
-            isPlaying = true;
-            if (isConnected) {
-                switch (currentSong) {
-                    case SONG_BBIBBI:
-                        connectionManager.write(Integer.toString(SONG_BBIBBI));
-                        mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music1));
-                        mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile1));
-                        mainMusicName.setText("삐삐");
-                        mainMusicMusician.setText("아이유");
-                        break;
-                    case SONG_TRAVEL:
-                        connectionManager.write(Integer.toString(SONG_TRAVEL));
-                        mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music2));
-                        mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile2));
-                        mainMusicName.setText("여행");
-                        mainMusicMusician.setText("볼빨간사춘기");
-                        break;
-                    case SONG_PHONECERT:
-                        connectionManager.write(Integer.toString(SONG_PHONECERT));
-                        mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music3));
-                        mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile3));
-                        mainMusicName.setText("폰서트");
-                        mainMusicMusician.setText("10CM");
-                        break;
-                }
-            } else {
-                setAboutBluetooth();
+    private void showCurrentSong() {
+        if (isConnected) {
+            switch (currentSong) {
+                case SONG_BBIBBI:
+                    mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music1));
+                    mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile1));
+                    mainMusicName.setText("삐삐");
+                    mainMusicMusician.setText("아이유");
+                    break;
+                case SONG_TRAVEL:
+                    mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music2));
+                    mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile2));
+                    mainMusicName.setText("여행");
+                    mainMusicMusician.setText("볼빨간사춘기");
+                    break;
+                case SONG_PHONECERT:
+                    mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music3));
+                    mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile3));
+                    mainMusicName.setText("폰서트");
+                    mainMusicMusician.setText("10CM");
+                    break;
             }
+        }
+    }
+
+    private void showNoneSong() {
+        mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music_none));
+        mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile_none));
+        mainMusicMusician.setText(getResources().getString(R.string.main_music_musician_none));
+        mainMusicName.setText(getResources().getString(R.string.main_music_name_none));
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void playCurrentSong() {
+        if (isConnected) {
+            mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_pause));
             timer.start();
+            switch (currentSong) {
+                case SONG_BBIBBI:
+                    connectionManager.write(Integer.toString(SONG_BBIBBI));
+                    break;
+                case SONG_TRAVEL:
+                    connectionManager.write(Integer.toString(SONG_TRAVEL));
+                    break;
+                case SONG_PHONECERT:
+                    connectionManager.write(Integer.toString(SONG_PHONECERT));
+                    break;
+            }
         } else
-            timer.stop();
+            setAboutBluetooth();
     }
 
     private void showUnsupportedDeviceDialog() {
@@ -348,10 +374,9 @@ public class MainActivity extends AppCompatActivity {
 
         ConnectionTasker(BluetoothDevice device) {
             try {
+                connectedDevice = device;
                 socket = device.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"));
-                Toast.makeText(MainActivity.this, device.getName() + "와 연결을 시도합니다.", Toast.LENGTH_LONG).show();
                 connectionManager = new ConnectionManager(socket);
-                MainActivity.this.connectedDevice = device;
             } catch (IOException e) {
                 showUnsupportedDeviceDialog();
             }
@@ -365,7 +390,16 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e) {
                 try {
                     socket.close();
-                    showUnsupportedDeviceDialog();
+                    Handler handler = new Handler(Looper.getMainLooper()) {
+                        @Override
+                        public void handleMessage(Message message) {
+                            timer.reset();
+                            showNoneSong();
+                            MainActivity.this.isConnected = false;
+                            Toast.makeText(MainActivity.this, connectedDevice.getName() + " 항목과 연결할 수 없습니다.", Toast.LENGTH_LONG).show();
+                        }
+                    };
+                    handler.obtainMessage().sendToTarget();
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
@@ -391,6 +425,10 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e) {
                 showUnsupportedDeviceDialog();
             }
+
+            Toast.makeText(MainActivity.this, connectedDevice.getName() + " 항목과 연결합니다.", Toast.LENGTH_LONG).show();
+            MainActivity.this.isConnected = true;
+            showCurrentSong();
         }
 
         @Override
@@ -401,7 +439,6 @@ public class MainActivity extends AppCompatActivity {
             while (true) {
                 if (isCancelled())
                     return false;
-
                 try {
                     int bytesAvailable = inputStream.available();
                     if (bytesAvailable > 0) {
@@ -421,7 +458,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 } catch (IOException e) {
-                    showUnsupportedDeviceDialog();
+                    e.printStackTrace();
                 }
             }
         }
@@ -429,19 +466,16 @@ public class MainActivity extends AppCompatActivity {
         //When message received on Android.
         @Override
         protected void onProgressUpdate(String... recvMessage) {
-            Log.d(connectedDevice.getName(), recvMessage[0]);
+            Log.d("받은메시지: ", recvMessage[0]);
         }
 
         @Override
         protected void onPostExecute(Boolean isSucess) {
             super.onPostExecute(isSucess);
-            if (isSucess) {
-                MainActivity.this.isConnected = true;
+            if (isSucess)
                 connectionManager.execute();
-            } else {
+            else
                 closeSocket();
-                Toast.makeText(MainActivity.this,"디바이스와 연결할 수 없습니다.", Toast.LENGTH_LONG).show();
-            }
         }
 
         @Override
@@ -453,7 +487,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 bluetoothSocket.close();
             } catch (IOException e) {
-                showUnsupportedDeviceDialog();
+                e.printStackTrace();
             }
         }
 
@@ -463,93 +497,120 @@ public class MainActivity extends AppCompatActivity {
                 outputStream.write(msg.getBytes());
                 outputStream.flush();
             } catch (IOException e) {
-                showUnsupportedDeviceDialog();
+                e.printStackTrace();
             }
         }
     }
 
     private class Timer {
-        ArrayList<EditText> timer = new ArrayList<>();
+        ArrayList<EditText> timer;
+        int setTime = 0;
 
-        private ArrayList<EditText> get() {
+        Timer() {
+            timer = new ArrayList<>();
+        }
+
+        ArrayList<EditText> get() {
             return timer;
         }
 
-        private void start() {
-            isFinished = false;
-            try {
-                int setH, setM, setS;
-                setH = Integer.parseInt(h1.getText().toString()) * 10 + Integer.parseInt(h2.getText().toString());
-                setM = Integer.parseInt(m1.getText().toString()) * 10 + Integer.parseInt(m2.getText().toString());
-                setS = Integer.parseInt(s1.getText().toString()) * 10 + Integer.parseInt(s2.getText().toString());
-                if ((setH > 0) || (setM > 0) || (setS > 59)) {
-                    Toast.makeText(MainActivity.this, "시간이 잘못 설정되었습니다.", Toast.LENGTH_LONG).show();
-                    mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_play));
-                    isPlaying = false;
-                } else {
-                    for (EditText e : timer) {
-                        e.setTextColor(getResources().getColor(R.color.colorMagenta));
-                        e.setFocusable(false);
-                    }
+        boolean ready() {
+            if (isConnected) {
+                setAboutBluetooth();
+                return false;
+            }
+            else if (setTime > 59) {
+                Toast.makeText(MainActivity.this, "타이머를 다시 확인하세요.", Toast.LENGTH_LONG).show();
+                return false;
+            } else if (timer.get(4).getText().toString().equals("") || timer.get(5).getText().toString().equals("")) {
+                Toast.makeText(MainActivity.this, "타이머를 다시 확인하세요.", Toast.LENGTH_LONG).show();
+                return false;
+            } else if (isRunning) {
+                Toast.makeText(MainActivity.this, "타이머가 끝날 때까지 기다리세요.", Toast.LENGTH_SHORT).show();
+                return false;
+            } else
+                return true;
+        }
 
-                    setTime = (setH * 3600) + (setM * 60) + setS;
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            while (!isFinished) {
+        void reset() {
+            for (EditText e : timer) {
+                e.setTextColor(getResources().getColor(R.color.colorBlack));
+                e.setText("");
+            }
+
+            Handler handler = new Handler(getMainLooper()) {
+                @Override
+                public void handleMessage(Message message) {
+                    s1.setFocusable(true);
+                    s2.setFocusable(true);
+                    s1.setFocusableInTouchMode(true);
+                    s2.setFocusableInTouchMode(true);
+                    mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_play));
+                }
+            };
+            handler.obtainMessage().sendToTarget();
+        }
+
+        @SuppressLint("SetTextI18n")
+        void start() {
+            isRunning = true;
+
+            timer.get(0).setText(Integer.toString(0));
+            timer.get(1).setText(Integer.toString(0));
+            timer.get(2).setText(Integer.toString(0));
+            timer.get(3).setText(Integer.toString(0));
+
+            setTime = Integer.parseInt(s1.getText().toString()) * 10 + Integer.parseInt(s2.getText().toString());
+
+            if (setTime > 59) {
+                Toast.makeText(MainActivity.this, "타이머를 다시 확인하세요.", Toast.LENGTH_LONG).show();
+                for (EditText e : timer) {
+                    e.setTextColor(getResources().getColor(R.color.colorBlack));
+                    e.setText("");
+                }
+
+            } else {
+
+                for (EditText e : timer) {
+                    e.setTextColor(getResources().getColor(R.color.colorMagenta));
+                    e.setFocusableInTouchMode(false);
+                    e.setFocusable(false);
+                }
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        while (isRunning) {
+                            try {
+                                Thread.sleep(1000);
                                 runOnUiThread(new Runnable() {
                                     @SuppressLint("SetTextI18n")
                                     @Override
                                     public void run() {
                                         if (setTime == 0) {
-                                            for (EditText e : timer) {
-                                                e.setTextColor(getResources().getColor(R.color.colorGrayDarker));
-                                                e.setText("");
-                                                stop();
-                                            }
-                                            isFinished = true;
+                                            reset();
+                                            isRunning = false;
                                         } else {
-                                            int logTime = setTime;
-                                            h1.setText(Integer.toString(logTime / (3600 * 10)));
-                                            logTime -= Integer.parseInt(h1.getText().toString()) * (3600 * 10);
-                                            h2.setText(Integer.toString(logTime / 3600));
-                                            logTime -= Integer.parseInt(h2.getText().toString()) * 3600;
-                                            m1.setText(Integer.toString(logTime / (60 * 10)));
-                                            logTime -= Integer.parseInt(m1.getText().toString()) * (60 * 10);
-                                            m2.setText(Integer.toString(logTime / 60));
-                                            logTime -= Integer.parseInt(m2.getText().toString()) * 60;
-                                            s1.setText(Integer.toString(logTime / 10));
-                                            logTime -= Integer.parseInt(s1.getText().toString()) * 10;
-                                            s2.setText(Integer.toString(logTime));
+                                            try {
+                                                int logTime = setTime;
+                                                logTime -= Integer.parseInt(m2.getText().toString()) * 60;
+                                                s1.setText(Integer.toString(logTime / 10));
+                                                logTime -= Integer.parseInt(s1.getText().toString()) * 10;
+                                                s2.setText(Integer.toString(logTime));
+                                            } catch (Exception e) {
+                                                isRunning = false;
+                                            }
                                         }
                                         setTime--;
                                     }
                                 });
-                                try {
-                                    Thread.sleep(1000);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
                             }
                         }
-                    }).start();
-                }
-            } catch (NumberFormatException e) {
-                Toast.makeText(MainActivity.this, "시간이 잘못 설정되었습니다.", Toast.LENGTH_LONG).show();
-                mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_play));
-                isPlaying = false;
+                    }
+                }).start();
             }
-        }
-
-        private void stop() {
-            for (EditText e : timer) {
-                e.setTextColor(getResources().getColor(R.color.colorBlack));
-                e.setFocusableInTouchMode(true);
-                e.setFocusable(true);
-            }
-            mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_play));
-            isPlaying = false;
-            isFinished = true;
         }
     }
 }
