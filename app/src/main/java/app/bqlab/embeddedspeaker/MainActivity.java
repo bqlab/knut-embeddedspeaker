@@ -136,6 +136,7 @@ public class MainActivity extends AppCompatActivity {
             });
         }
         mainBodyFndSwitch = findViewById(R.id.main_body_fnd_switch);
+        mainBodyFndSwitch.setChecked(true);
         mainBodyFndSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -150,7 +151,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         mainBodyMotorSwitch = findViewById(R.id.main_body_motor_switch);
-        mainBodyMotorSwitch.setChecked(getSharedPreferences("setting", MODE_PRIVATE).getBoolean("motor", true));
+        mainBodyMotorSwitch.setChecked(true);
         mainBodyMotorSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
