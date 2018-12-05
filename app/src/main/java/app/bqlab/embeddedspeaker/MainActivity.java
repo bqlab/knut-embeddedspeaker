@@ -14,6 +14,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.UUID;
 
@@ -488,6 +490,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 socket = device.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"));
                 Toast.makeText(MainActivity.this, device.getName() + "와 연결을 시도합니다.", Toast.LENGTH_LONG).show();
+                MainActivity.connectedDevice = device;
             } catch (IOException e) {
                 showUnsupportedDeviceDialog();
             }
@@ -511,6 +514,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //Class that manage connection state after be connecting.
     @SuppressLint("StaticFieldLeak")
     private class ConnectManager extends AsyncTask<Void, String, Boolean> {
 
@@ -558,6 +562,45 @@ public class MainActivity extends AppCompatActivity {
                 } catch (IOException e) {
                     showUnsupportedDeviceDialog();
                 }
+            }
+        }
+
+        //When message received on Android.
+        @Override
+        protected void onProgressUpdate(String... recvMessage) {
+            Log.d(connectedDevice.getName(), recvMessage[0]);
+        }
+
+        @Override
+        protected void onPostExecute(Boolean isSucess) {
+            super.onPostExecute(isSucess);
+
+            if (!isSucess) {
+                closeSocket();
+                showUnsupportedDeviceDialog();
+            }
+        }
+
+        @Override
+        protected void onCancelled(Boolean aBoolean) {
+            super.onCancelled();
+        }
+
+        private void closeSocket() {
+            try {
+                bluetoothSocket.close();
+            } catch (IOException e) {
+                showUnsupportedDeviceDialog();
+            }
+        }
+
+        private void write(String msg) {
+            msg += "\n";
+            try {
+                outputStream.write(msg.getBytes());
+                outputStream.flush();
+            } catch (IOException e) {
+                showUnsupportedDeviceDialog();
             }
         }
     }
