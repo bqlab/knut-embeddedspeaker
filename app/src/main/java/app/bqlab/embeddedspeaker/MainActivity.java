@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -41,15 +42,15 @@ public class MainActivity extends AppCompatActivity {
     final int SETTING_MOTOR_ON = 7;
     final int REQUEST_ENABLE_BT = 8;
 
-    BluetoothAdapter bluetoothAdapter;
-    BluetoothSocket bluetoothSocket;
-    BluetoothDevice connectedDevice;
-    Set<BluetoothDevice> pairedDevices;
-    OutputStream outputStream;
-    InputStream inputStream;
-    Thread connectThread;
-    byte[] readBuffer;
-    int readBufferPosition;
+    private InputStream inputStream;
+    private OutputStream outputStream;
+    private BluetoothSocket bluetoothSocket;
+
+    static BluetoothAdapter bluetoothAdapter;
+    static BluetoothDevice connectedDevice;
+    static Thread connectThread;
+    static byte[] readBuffer;
+    static int readBufferPosition;
 
     LinearLayout mainMusic;
     Button mainMusicProfile;
@@ -201,11 +202,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setAboutBluetooth() {
-        //Necessary objects.
         try {
-            final UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+            //Necessary objects.
             bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-            pairedDevices = bluetoothAdapter.getBondedDevices();
+            Set<BluetoothDevice> bondedDevices = bluetoothAdapter.getBondedDevices();
+            final BluetoothDevice[] pairedDevices = bondedDevices.toArray(new BluetoothDevice[0]);
 
             //Check the device support bluetooth.
             if (bluetoothAdapter == null)
@@ -216,7 +217,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(i, REQUEST_ENABLE_BT);
             }
             //Check this device have paired devices.
-            else if (pairedDevices.size() == 0) {
+            else if (pairedDevices.length == 0) {
                 new AlertDialog.Builder(this)
                         .setTitle("페어링된 디바이스가 없습니다.")
                         .setMessage("블루투스 설정 화면으로 이동하여 디바이스를 페어링한 후 다시 시도하세요.")
@@ -229,36 +230,18 @@ public class MainActivity extends AppCompatActivity {
             }
             //Check this device connected to other device.
             else if (!isConnected) {
-                final ArrayList<String> deviceNames = new ArrayList<>();
-                for (BluetoothDevice device : pairedDevices)
-                    deviceNames.add(device.getName());
+                String[] items = new String[pairedDevices.length];
+                for (int i = 0; i < pairedDevices.length; i++)
+                    items[i] = pairedDevices[i].getName();
 
-                //Find the connected device object.
-                final CharSequence[] items = deviceNames.toArray(new CharSequence[0]);
                 new AlertDialog.Builder(this)
                         .setTitle("페어링된 디바이스를 선택하세요.")
                         .setItems(items, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, final int which) {
-                                //Make bluetooth socket.
-                                for (BluetoothDevice device : pairedDevices)
-                                    if (device.getName().equals(items[which].toString()))
-                                        connectedDevice = device;
-
-                                try {
-                                    bluetoothSocket = connectedDevice.createRfcommSocketToServiceRecord(uuid);
-                                    bluetoothSocket.connect();
-
-                                    outputStream = bluetoothSocket.getOutputStream();
-                                    inputStream = bluetoothSocket.getInputStream();
-
-                                    readBuffer = new byte[1024];
-                                    readBufferPosition = 0;
-
-                                    connectDevice();
-                                } catch (IOException e) {
-                                    Toast.makeText(MainActivity.this, "디바이스에 연결할 수 없습니다.", Toast.LENGTH_LONG).show();
-                                }
+                                ConnectTasker connectTasker = new ConnectTasker(pairedDevices[which]);
+                                connectTasker.execute();
+                                dialog.dismiss();
                             }
                         })
                         .setNeutralButton("설정화면으로 이동", new DialogInterface.OnClickListener() {
@@ -491,6 +474,89 @@ public class MainActivity extends AppCompatActivity {
                                     dialog.dismiss();
                                 }
                             }).show();
+            }
+        }
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private class ConnectTasker extends AsyncTask<Void, Void, Boolean> {
+
+        private BluetoothSocket socket = null;
+
+        ConnectTasker(BluetoothDevice device) {
+            try {
+                socket = device.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"));
+                Toast.makeText(MainActivity.this, device.getName()+"와 연결을 시도합니다.", Toast.LENGTH_LONG).show();
+            } catch (IOException e) {
+                showUnsupportedDeviceDialog();
+            }
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            bluetoothAdapter.cancelDiscovery();
+            try {
+                socket.connect();
+            } catch (IOException e) {
+                try {
+                    socket.close();
+                    showUnsupportedDeviceDialog();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+                return false;
+            }
+            return true;
+        }
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private class ConnectManager extends AsyncTask<Void, String, Boolean> {
+
+        private InputStream inputStream;
+        private OutputStream outputStream;
+        private BluetoothSocket bluetoothSocket;
+
+        ConnectManager(BluetoothDevice device, BluetoothSocket socket) {
+            try {
+                bluetoothSocket = socket;
+                inputStream = bluetoothSocket.getInputStream();
+                outputStream = bluetoothSocket.getOutputStream();
+            } catch (IOException e) {
+                showUnsupportedDeviceDialog();
+            }
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            byte[] readBuffer = new byte[1024];
+            int readBufferPosition = 0;
+
+            while (true) {
+                if (isCancelled())
+                    return false;
+
+                try {
+                    int bytesAvailable = inputStream.available();
+                    if (bytesAvailable > 0) {
+                        byte[] packetBytes = new byte[bytesAvailable];
+                        int input = inputStream.read(packetBytes);
+
+                        for (int i = 0; i < bytesAvailable; i++) {
+                            byte b = packetBytes[i];
+                            if (b == '\n') {
+                                byte[] encodedBytes = new byte[readBufferPosition];
+                                System.arraycopy(readBuffer, 0, encodedBytes, 0, encodedBytes.length);
+                                String recvMessage = new String(encodedBytes, "UTF-8");
+                                readBufferPosition = 0;
+                                publishProgress(recvMessage);
+                            } else
+                                readBuffer[readBufferPosition++] = b;
+                        }
+                    }
+                } catch (IOException e) {
+                    showUnsupportedDeviceDialog();
+                }
             }
         }
     }
