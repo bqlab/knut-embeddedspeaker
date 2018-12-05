@@ -478,6 +478,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //Class that try to be connecting device.
     @SuppressLint("StaticFieldLeak")
     private class ConnectTasker extends AsyncTask<Void, Void, Boolean> {
 
@@ -486,7 +487,7 @@ public class MainActivity extends AppCompatActivity {
         ConnectTasker(BluetoothDevice device) {
             try {
                 socket = device.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"));
-                Toast.makeText(MainActivity.this, device.getName()+"와 연결을 시도합니다.", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, device.getName() + "와 연결을 시도합니다.", Toast.LENGTH_LONG).show();
             } catch (IOException e) {
                 showUnsupportedDeviceDialog();
             }
