@@ -519,7 +519,7 @@ public class MainActivity extends AppCompatActivity {
                 setAboutBluetooth();
                 return false;
             }
-            else if (setTime > 59) {
+            else if (setTime > 59 || setTime < 10) {
                 Toast.makeText(MainActivity.this, "타이머를 다시 확인하세요.", Toast.LENGTH_LONG).show();
                 return false;
             } else if (timer.get(4).getText().toString().equals("") || timer.get(5).getText().toString().equals("")) {
@@ -562,7 +562,7 @@ public class MainActivity extends AppCompatActivity {
 
             setTime = Integer.parseInt(s1.getText().toString()) * 10 + Integer.parseInt(s2.getText().toString());
 
-            if (setTime > 59) {
+            if (setTime > 59 || setTime < 10) {
                 Toast.makeText(MainActivity.this, "타이머를 다시 확인하세요.", Toast.LENGTH_LONG).show();
                 for (EditText e : timer) {
                     e.setTextColor(getResources().getColor(R.color.colorBlack));
