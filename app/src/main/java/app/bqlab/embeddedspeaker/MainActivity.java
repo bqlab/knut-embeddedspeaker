@@ -43,15 +43,9 @@ public class MainActivity extends AppCompatActivity {
     final int SETTING_MOTOR_ON = 7;
     final int REQUEST_ENABLE_BT = 8;
 
-    private InputStream inputStream;
-    private OutputStream outputStream;
-    private BluetoothSocket bluetoothSocket;
-
-    static BluetoothAdapter bluetoothAdapter;
-    static BluetoothDevice connectedDevice;
-    static Thread connectThread;
-    static byte[] readBuffer;
-    static int readBufferPosition;
+    private BluetoothAdapter bluetoothAdapter;
+    private BluetoothDevice connectedDevice;
+    private ConnectionManager connectionManager;
 
     LinearLayout mainMusic;
     Button mainMusicProfile;
@@ -77,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        disconnectDevice();
+        isConnected = false;
     }
 
     private void init() {
@@ -103,6 +97,10 @@ public class MainActivity extends AppCompatActivity {
         m2 = findViewById(R.id.main_body_timer_m2);
         s1 = findViewById(R.id.main_body_timer_s1);
         s2 = findViewById(R.id.main_body_timer_s2);
+        h1.setFocusable(View.NOT_FOCUSABLE);
+        h2.setFocusable(View.NOT_FOCUSABLE);
+        m1.setFocusable(View.NOT_FOCUSABLE);
+        m2.setFocusable(View.NOT_FOCUSABLE);
         timer.get().add(h1);
         timer.get().add(h2);
         timer.get().add(m1);
@@ -129,10 +127,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
-        h1.setFocusable(View.NOT_FOCUSABLE);
-        h2.setFocusable(View.NOT_FOCUSABLE);
-        m1.setFocusable(View.NOT_FOCUSABLE);
-        m2.setFocusable(View.NOT_FOCUSABLE);
         mainBodyFndSwitch = findViewById(R.id.main_body_fnd_switch);
         mainBodyFndSwitch.setChecked(getSharedPreferences("setting", MODE_PRIVATE).getBoolean("fnd", true));
         mainBodyFndSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -143,14 +137,10 @@ public class MainActivity extends AppCompatActivity {
                     mainBodyFndSwitch.setChecked(getSharedPreferences("setting", MODE_PRIVATE).getBoolean("fnd", true));
                 } else {
                     getSharedPreferences("setting", MODE_PRIVATE).edit().putBoolean("fnd", isChecked).apply();
-                    try {
-                        if (getSharedPreferences("setting", MODE_PRIVATE).getBoolean("fnd", true))
-                            outputStream.write(SETTING_FND_ON);
-                        else
-                            outputStream.write(SETTING_FND_OFF);
-                    } catch (IOException e) {
-                        Toast.makeText(MainActivity.this, "디바이스와의 연결이 끊겼습니다.", Toast.LENGTH_LONG).show();
-                    }
+                    if (getSharedPreferences("setting", MODE_PRIVATE).getBoolean("fnd", true))
+                        connectionManager.write(Integer.toString(SETTING_FND_ON));
+                    else
+                        connectionManager.write(Integer.toString(SETTING_FND_OFF));
                 }
             }
         });
@@ -164,14 +154,10 @@ public class MainActivity extends AppCompatActivity {
                     mainBodyMotorSwitch.setChecked(getSharedPreferences("setting", MODE_PRIVATE).getBoolean("motor", true));
                 } else {
                     getSharedPreferences("setting", MODE_PRIVATE).edit().putBoolean("motor", isChecked).apply();
-                    try {
-                        if (getSharedPreferences("setting", MODE_PRIVATE).getBoolean("motor", true))
-                            outputStream.write(SETTING_MOTOR_ON);
-                        else
-                            outputStream.write(SETTING_MOTOR_OFF);
-                    } catch (IOException e) {
-                        Toast.makeText(MainActivity.this, "디바이스와의 연결이 끊겼습니다.", Toast.LENGTH_LONG).show();
-                    }
+                    if (getSharedPreferences("setting", MODE_PRIVATE).getBoolean("motor", true))
+                        connectionManager.write(Integer.toString(SETTING_MOTOR_ON));
+                    else
+                        connectionManager.write(Integer.toString(SETTING_MOTOR_OFF));
                 }
             }
         });
@@ -212,7 +198,7 @@ public class MainActivity extends AppCompatActivity {
             //Check the device support bluetooth.
             if (bluetoothAdapter == null)
                 showUnsupportedDeviceDialog();
-                //Check bluetooth activated.
+            //Check bluetooth activated.
             else if (!bluetoothAdapter.isEnabled()) {
                 Intent i = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 startActivityForResult(i, REQUEST_ENABLE_BT);
@@ -240,8 +226,8 @@ public class MainActivity extends AppCompatActivity {
                         .setItems(items, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, final int which) {
-                                ConnectTasker connectTasker = new ConnectTasker(pairedDevices[which]);
-                                connectTasker.execute();
+                                ConnectionTasker connectionTasker = new ConnectionTasker(pairedDevices[which]);
+                                connectionTasker.execute();
                                 dialog.dismiss();
                             }
                         })
@@ -267,50 +253,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (NullPointerException e) {
             showUnsupportedDeviceDialog();
         }
-
-    }
-
-    private void connectDevice() {
-        connectThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (Thread.currentThread().isInterrupted()) {
-                    try {
-                        isConnected = true;
-                        int byteAvailable = inputStream.available();
-                        if (byteAvailable > 0) {
-                            byte[] bytes = new byte[byteAvailable];
-                            int readBytes = inputStream.read(bytes);
-                            for (int i = 0; i < byteAvailable; i++) {
-                                byte[] encodedBytes = new byte[readBufferPosition];
-                                System.arraycopy(readBuffer, 0, encodedBytes, 0, encodedBytes.length);
-                                final String receivedContent = new String(encodedBytes, "US-ASCII");
-                                readBufferPosition = 0;
-                                if (Integer.parseInt(receivedContent) == DEVICE_OFF)
-                                    disconnectDevice();
-                            }
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
-
-        connectThread.start();
-    }
-
-
-    private void disconnectDevice() {
-        isConnected = false;
-        timer.stop();
-        mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music_none));
-        mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile_none));
     }
 
     @SuppressLint("SetTextI18n")
@@ -319,32 +261,28 @@ public class MainActivity extends AppCompatActivity {
             mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_pause));
             isPlaying = true;
             if (isConnected) {
-                try {
-                    switch (currentSong) {
-                        case SONG_BBIBBI:
-                            outputStream.write(SONG_BBIBBI);
-                            mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music1));
-                            mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile1));
-                            mainMusicName.setText("삐삐");
-                            mainMusicMusician.setText("아이유");
-                            break;
-                        case SONG_TRAVEL:
-                            outputStream.write(SONG_TRAVEL);
-                            mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music2));
-                            mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile2));
-                            mainMusicName.setText("여행");
-                            mainMusicMusician.setText("볼빨간사춘기");
-                            break;
-                        case SONG_PHONECERT:
-                            outputStream.write(SONG_PHONECERT);
-                            mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music3));
-                            mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile3));
-                            mainMusicName.setText("폰서트");
-                            mainMusicMusician.setText("10CM");
-                            break;
-                    }
-                } catch (IOException e) {
-                    Toast.makeText(MainActivity.this, "디바이스와의 연결이 끊겼습니다.", Toast.LENGTH_LONG).show();
+                switch (currentSong) {
+                    case SONG_BBIBBI:
+                        connectionManager.write(Integer.toString(SONG_BBIBBI));
+                        mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music1));
+                        mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile1));
+                        mainMusicName.setText("삐삐");
+                        mainMusicMusician.setText("아이유");
+                        break;
+                    case SONG_TRAVEL:
+                        connectionManager.write(Integer.toString(SONG_TRAVEL));
+                        mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music2));
+                        mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile2));
+                        mainMusicName.setText("여행");
+                        mainMusicMusician.setText("볼빨간사춘기");
+                        break;
+                    case SONG_PHONECERT:
+                        connectionManager.write(Integer.toString(SONG_PHONECERT));
+                        mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music3));
+                        mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile3));
+                        mainMusicName.setText("폰서트");
+                        mainMusicMusician.setText("10CM");
+                        break;
                 }
             } else {
                 setAboutBluetooth();
@@ -404,15 +342,16 @@ public class MainActivity extends AppCompatActivity {
 
     //Class that try to be connecting device.
     @SuppressLint("StaticFieldLeak")
-    private class ConnectTasker extends AsyncTask<Void, Void, Boolean> {
+    private class ConnectionTasker extends AsyncTask<Void, Void, Boolean> {
 
         private BluetoothSocket socket = null;
 
-        ConnectTasker(BluetoothDevice device) {
+        ConnectionTasker(BluetoothDevice device) {
             try {
                 socket = device.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"));
                 Toast.makeText(MainActivity.this, device.getName() + "와 연결을 시도합니다.", Toast.LENGTH_LONG).show();
-                MainActivity.connectedDevice = device;
+                connectionManager = new ConnectionManager(socket);
+                MainActivity.this.connectedDevice = device;
             } catch (IOException e) {
                 showUnsupportedDeviceDialog();
             }
@@ -438,13 +377,13 @@ public class MainActivity extends AppCompatActivity {
 
     //Class that manage connection state after be connecting.
     @SuppressLint("StaticFieldLeak")
-    private class ConnectManager extends AsyncTask<Void, String, Boolean> {
+    private class ConnectionManager extends AsyncTask<Void, String, Boolean> {
 
         private InputStream inputStream;
         private OutputStream outputStream;
         private BluetoothSocket bluetoothSocket;
 
-        ConnectManager(BluetoothDevice device, BluetoothSocket socket) {
+        ConnectionManager(BluetoothSocket socket) {
             try {
                 bluetoothSocket = socket;
                 inputStream = bluetoothSocket.getInputStream();
@@ -496,10 +435,12 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean isSucess) {
             super.onPostExecute(isSucess);
-
-            if (!isSucess) {
+            if (isSucess) {
+                MainActivity.this.isConnected = true;
+                connectionManager.execute();
+            } else {
                 closeSocket();
-                showUnsupportedDeviceDialog();
+                Toast.makeText(MainActivity.this,"디바이스와 연결할 수 없습니다.", Toast.LENGTH_LONG).show();
             }
         }
 
