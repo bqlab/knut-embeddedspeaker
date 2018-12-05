@@ -518,10 +518,6 @@ public class MainActivity extends AppCompatActivity {
             if (isConnected) {
                 setAboutBluetooth();
                 return false;
-            }
-            else if (setTime > 59 || setTime < 10) {
-                Toast.makeText(MainActivity.this, "타이머를 다시 확인하세요.", Toast.LENGTH_LONG).show();
-                return false;
             } else if (timer.get(4).getText().toString().equals("") || timer.get(5).getText().toString().equals("")) {
                 Toast.makeText(MainActivity.this, "타이머를 다시 확인하세요.", Toast.LENGTH_LONG).show();
                 return false;
