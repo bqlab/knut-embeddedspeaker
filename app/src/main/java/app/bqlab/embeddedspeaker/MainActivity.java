@@ -8,13 +8,11 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.Handler;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -64,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     Button mainBarPrev, mainBarPlay, mainBarNext;
 
     boolean isConnected, isFinished, isPlaying;
-    int playSong, setTime;
+    int currentSong, setTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void init() {
         //Data setting
-        playSong = SONG_BBIBBI;
+        currentSong = SONG_BBIBBI;
 
         //main_music setting
         mainMusic = findViewById(R.id.main_music);
@@ -89,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
         mainMusicProfile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                playNowSong();
+                playCurrentSong();
             }
         });
         mainMusicName = findViewById(R.id.main_music_name);
@@ -129,6 +127,10 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+        h1.setFocusable(View.NOT_FOCUSABLE);
+        h2.setFocusable(View.NOT_FOCUSABLE);
+        m1.setFocusable(View.NOT_FOCUSABLE);
+        m2.setFocusable(View.NOT_FOCUSABLE);
         mainBodyFndSwitch = findViewById(R.id.main_body_fnd_switch);
         mainBodyFndSwitch.setChecked(getSharedPreferences("setting", MODE_PRIVATE).getBoolean("fnd", true));
         mainBodyFndSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -157,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (!isConnected) {
                     setAboutBluetooth();
-                    mainBodyMotorSwitch.setChecked(getSharedPreferences("setting", MODE_PRIVATE).getBoolean("fnd", true));
+                    mainBodyMotorSwitch.setChecked(getSharedPreferences("setting", MODE_PRIVATE).getBoolean("motor", true));
                 } else {
                     getSharedPreferences("setting", MODE_PRIVATE).edit().putBoolean("motor", isChecked).apply();
                     try {
@@ -177,29 +179,23 @@ public class MainActivity extends AppCompatActivity {
         mainBarPrev.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                playSong--;
-                playNowSong();
+                currentSong--;
+                playCurrentSong();
             }
         });
         mainBarPlay = findViewById(R.id.main_bar_play);
         mainBarPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!isPlaying) {
-                    mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_pause));
-                    isPlaying = true;
-                    playNowSong();
-                    startTimer();
-                } else
-                    stopTimer();
+                playCurrentSong();
             }
         });
         mainBarNext = findViewById(R.id.main_bar_next);
         mainBarNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                playSong++;
-                playNowSong();
+                currentSong++;
+                playCurrentSong();
             }
         });
     }
@@ -334,38 +330,44 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @SuppressLint("SetTextI18n")
-    private void playNowSong() {
-        if (isConnected) {
-            try {
-                switch (playSong) {
-                    case SONG_BBIBBI:
-                        outputStream.write(SONG_BBIBBI);
-                        mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music1));
-                        mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile1));
-                        mainMusicName.setText("삐삐");
-                        mainMusicMusician.setText("아이유");
-                        break;
-                    case SONG_TRAVEL:
-                        outputStream.write(SONG_TRAVEL);
-                        mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music2));
-                        mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile2));
-                        mainMusicName.setText("여행");
-                        mainMusicMusician.setText("볼빨간사춘기");
-                        break;
-                    case SONG_PHONECERT:
-                        outputStream.write(SONG_PHONECERT);
-                        mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music3));
-                        mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile3));
-                        mainMusicName.setText("폰서트");
-                        mainMusicMusician.setText("10CM");
-                        break;
+    private void playCurrentSong() {
+        if (!isPlaying) {
+            mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_pause));
+            isPlaying = true;
+            if (isConnected) {
+                try {
+                    switch (currentSong) {
+                        case SONG_BBIBBI:
+                            outputStream.write(SONG_BBIBBI);
+                            mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music1));
+                            mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile1));
+                            mainMusicName.setText("삐삐");
+                            mainMusicMusician.setText("아이유");
+                            break;
+                        case SONG_TRAVEL:
+                            outputStream.write(SONG_TRAVEL);
+                            mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music2));
+                            mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile2));
+                            mainMusicName.setText("여행");
+                            mainMusicMusician.setText("볼빨간사춘기");
+                            break;
+                        case SONG_PHONECERT:
+                            outputStream.write(SONG_PHONECERT);
+                            mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music3));
+                            mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile3));
+                            mainMusicName.setText("폰서트");
+                            mainMusicMusician.setText("10CM");
+                            break;
+                    }
+                } catch (IOException e) {
+                    Toast.makeText(MainActivity.this, "디바이스와의 연결이 끊겼습니다.", Toast.LENGTH_LONG).show();
                 }
-            } catch (IOException e) {
-                Toast.makeText(MainActivity.this, "디바이스와의 연결이 끊겼습니다.", Toast.LENGTH_LONG).show();
+            } else {
+                setAboutBluetooth();
             }
-        } else {
-            setAboutBluetooth();
-        }
+            startTimer();
+        } else
+            stopTimer();
     }
 
     private void startTimer() {
