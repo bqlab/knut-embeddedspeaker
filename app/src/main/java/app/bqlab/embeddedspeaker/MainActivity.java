@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Set;
 import java.util.UUID;
 
@@ -58,7 +57,6 @@ public class MainActivity extends AppCompatActivity {
     Button mainMusicProfile;
     TextView mainMusicName, mainMusicMusician;
 
-    ArrayList<EditText> timer;
     EditText h1, h2, m1, m2, s1, s2;
     Switch mainBodyFndSwitch, mainBodyMotorSwitch;
 
@@ -66,6 +64,8 @@ public class MainActivity extends AppCompatActivity {
 
     boolean isConnected, isFinished, isPlaying;
     int currentSong, setTime;
+
+    Timer timer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,22 +97,21 @@ public class MainActivity extends AppCompatActivity {
         mainMusicMusician = findViewById(R.id.main_music_musician);
 
         //main_body setting
-        timer = new ArrayList<>();
         h1 = findViewById(R.id.main_body_timer_h1);
         h2 = findViewById(R.id.main_body_timer_h2);
         m1 = findViewById(R.id.main_body_timer_m1);
         m2 = findViewById(R.id.main_body_timer_m2);
         s1 = findViewById(R.id.main_body_timer_s1);
         s2 = findViewById(R.id.main_body_timer_s2);
-        timer.add(h1);
-        timer.add(h2);
-        timer.add(m1);
-        timer.add(m2);
-        timer.add(s1);
-        timer.add(s2);
-        for (int i = 0; i < timer.size(); i++) {
+        timer.get().add(h1);
+        timer.get().add(h2);
+        timer.get().add(m1);
+        timer.get().add(m2);
+        timer.get().add(s1);
+        timer.get().add(s2);
+        for (int i = 0; i < timer.get().size(); i++) {
             final int finalI = i;
-            timer.get(i).addTextChangedListener(new TextWatcher() {
+            timer.get().get(i).addTextChangedListener(new TextWatcher() {
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
@@ -125,8 +124,8 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void afterTextChanged(Editable s) {
-                    if (!(finalI == 5) && !timer.get(finalI).getText().toString().equals(""))
-                        timer.get(finalI + 1).requestFocus();
+                    if (!(finalI == 5) && !timer.get().get(finalI).getText().toString().equals(""))
+                        timer.get().get(finalI + 1).requestFocus();
                 }
             });
         }
@@ -309,7 +308,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void disconnectDevice() {
         isConnected = false;
-        stopTimer();
+        timer.stop();
         mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music_none));
         mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile_none));
     }
@@ -350,86 +349,9 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 setAboutBluetooth();
             }
-            startTimer();
+            timer.start();
         } else
-            stopTimer();
-    }
-
-    private void startTimer() {
-        isFinished = false;
-        try {
-            int setH, setM, setS;
-            setH = Integer.parseInt(h1.getText().toString()) * 10 + Integer.parseInt(h2.getText().toString());
-            setM = Integer.parseInt(m1.getText().toString()) * 10 + Integer.parseInt(m2.getText().toString());
-            setS = Integer.parseInt(s1.getText().toString()) * 10 + Integer.parseInt(s2.getText().toString());
-            if ((setH > 0) || (setM > 0) || (setS > 59)) {
-                Toast.makeText(this, "시간이 잘못 설정되었습니다.", Toast.LENGTH_LONG).show();
-                mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_play));
-                isPlaying = false;
-            } else {
-                for (EditText e : timer) {
-                    e.setTextColor(getResources().getColor(R.color.colorMagenta));
-                    e.setFocusable(false);
-                }
-
-                setTime = (setH * 3600) + (setM * 60) + setS;
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        while (!isFinished) {
-                            runOnUiThread(new Runnable() {
-                                @SuppressLint("SetTextI18n")
-                                @Override
-                                public void run() {
-                                    if (setTime == 0) {
-                                        for (EditText e : timer) {
-                                            e.setTextColor(getResources().getColor(R.color.colorGrayDarker));
-                                            e.setText("");
-                                            stopTimer();
-                                        }
-                                        isFinished = true;
-                                    } else {
-                                        int logTime = setTime;
-                                        h1.setText(Integer.toString(logTime / (3600 * 10)));
-                                        logTime -= Integer.parseInt(h1.getText().toString()) * (3600 * 10);
-                                        h2.setText(Integer.toString(logTime / 3600));
-                                        logTime -= Integer.parseInt(h2.getText().toString()) * 3600;
-                                        m1.setText(Integer.toString(logTime / (60 * 10)));
-                                        logTime -= Integer.parseInt(m1.getText().toString()) * (60 * 10);
-                                        m2.setText(Integer.toString(logTime / 60));
-                                        logTime -= Integer.parseInt(m2.getText().toString()) * 60;
-                                        s1.setText(Integer.toString(logTime / 10));
-                                        logTime -= Integer.parseInt(s1.getText().toString()) * 10;
-                                        s2.setText(Integer.toString(logTime));
-                                    }
-                                    setTime--;
-                                }
-                            });
-                            try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                }).start();
-            }
-        } catch (NumberFormatException e) {
-            Toast.makeText(this, "시간이 잘못 설정되었습니다.", Toast.LENGTH_LONG).show();
-            mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_play));
-            isPlaying = false;
-        }
-    }
-
-    private void stopTimer() {
-        for (EditText e : timer) {
-            e.setTextColor(getResources().getColor(R.color.colorBlack));
-            e.setFocusableInTouchMode(true);
-            e.setFocusable(true);
-        }
-        mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_play));
-        isPlaying = false;
-        isFinished = true;
+            timer.stop();
     }
 
     private void showUnsupportedDeviceDialog() {
@@ -602,6 +524,91 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e) {
                 showUnsupportedDeviceDialog();
             }
+        }
+    }
+
+    private class Timer {
+        ArrayList<EditText> timer = new ArrayList<>();
+
+        private ArrayList<EditText> get() {
+            return timer;
+        }
+
+        private void start() {
+            isFinished = false;
+            try {
+                int setH, setM, setS;
+                setH = Integer.parseInt(h1.getText().toString()) * 10 + Integer.parseInt(h2.getText().toString());
+                setM = Integer.parseInt(m1.getText().toString()) * 10 + Integer.parseInt(m2.getText().toString());
+                setS = Integer.parseInt(s1.getText().toString()) * 10 + Integer.parseInt(s2.getText().toString());
+                if ((setH > 0) || (setM > 0) || (setS > 59)) {
+                    Toast.makeText(MainActivity.this, "시간이 잘못 설정되었습니다.", Toast.LENGTH_LONG).show();
+                    mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_play));
+                    isPlaying = false;
+                } else {
+                    for (EditText e : timer) {
+                        e.setTextColor(getResources().getColor(R.color.colorMagenta));
+                        e.setFocusable(false);
+                    }
+
+                    setTime = (setH * 3600) + (setM * 60) + setS;
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            while (!isFinished) {
+                                runOnUiThread(new Runnable() {
+                                    @SuppressLint("SetTextI18n")
+                                    @Override
+                                    public void run() {
+                                        if (setTime == 0) {
+                                            for (EditText e : timer) {
+                                                e.setTextColor(getResources().getColor(R.color.colorGrayDarker));
+                                                e.setText("");
+                                                stop();
+                                            }
+                                            isFinished = true;
+                                        } else {
+                                            int logTime = setTime;
+                                            h1.setText(Integer.toString(logTime / (3600 * 10)));
+                                            logTime -= Integer.parseInt(h1.getText().toString()) * (3600 * 10);
+                                            h2.setText(Integer.toString(logTime / 3600));
+                                            logTime -= Integer.parseInt(h2.getText().toString()) * 3600;
+                                            m1.setText(Integer.toString(logTime / (60 * 10)));
+                                            logTime -= Integer.parseInt(m1.getText().toString()) * (60 * 10);
+                                            m2.setText(Integer.toString(logTime / 60));
+                                            logTime -= Integer.parseInt(m2.getText().toString()) * 60;
+                                            s1.setText(Integer.toString(logTime / 10));
+                                            logTime -= Integer.parseInt(s1.getText().toString()) * 10;
+                                            s2.setText(Integer.toString(logTime));
+                                        }
+                                        setTime--;
+                                    }
+                                });
+                                try {
+                                    Thread.sleep(1000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    }).start();
+                }
+            } catch (NumberFormatException e) {
+                Toast.makeText(MainActivity.this, "시간이 잘못 설정되었습니다.", Toast.LENGTH_LONG).show();
+                mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_play));
+                isPlaying = false;
+            }
+        }
+
+        private void stop() {
+            for (EditText e : timer) {
+                e.setTextColor(getResources().getColor(R.color.colorBlack));
+                e.setFocusableInTouchMode(true);
+                e.setFocusable(true);
+            }
+            mainBarPlay.setBackground(getResources().getDrawable(R.drawable.main_bar_play));
+            isPlaying = false;
+            isFinished = true;
         }
     }
 }
