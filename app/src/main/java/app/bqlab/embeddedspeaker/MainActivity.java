@@ -10,6 +10,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.media.Image;
 import android.os.AsyncTask;
+import android.os.Debug;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -53,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
     private ConnectionManager connectionManager;
 
     LinearLayout mainMusic;
-    ImageView mainMusicProfile;
+    Button mainMusicProfile;
     TextView mainMusicName, mainMusicMusician;
 
     EditText h1, h2, m1, m2, s1, s2;
@@ -61,8 +62,8 @@ public class MainActivity extends AppCompatActivity {
 
     Button mainBarPrev, mainBarPlay, mainBarNext;
 
-    boolean isConnected, isFinished, isRunning;
-    int currentSong, setTime;
+    boolean isConnected, isRunning;
+    int currentSong;
 
     Timer timer;
 
@@ -135,16 +136,13 @@ public class MainActivity extends AppCompatActivity {
             });
         }
         mainBodyFndSwitch = findViewById(R.id.main_body_fnd_switch);
-        mainBodyFndSwitch.setChecked(getSharedPreferences("setting", MODE_PRIVATE).getBoolean("fnd", true));
         mainBodyFndSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (!isConnected) {
                     setAboutBluetooth();
-                    mainBodyFndSwitch.setChecked(getSharedPreferences("setting", MODE_PRIVATE).getBoolean("fnd", true));
                 } else {
-                    getSharedPreferences("setting", MODE_PRIVATE).edit().putBoolean("fnd", isChecked).apply();
-                    if (getSharedPreferences("setting", MODE_PRIVATE).getBoolean("fnd", true))
+                    if (isChecked)
                         connectionManager.write(Integer.toString(SETTING_FND_ON));
                     else
                         connectionManager.write(Integer.toString(SETTING_FND_OFF));
@@ -158,10 +156,8 @@ public class MainActivity extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (!isConnected) {
                     setAboutBluetooth();
-                    mainBodyMotorSwitch.setChecked(getSharedPreferences("setting", MODE_PRIVATE).getBoolean("motor", true));
                 } else {
-                    getSharedPreferences("setting", MODE_PRIVATE).edit().putBoolean("motor", isChecked).apply();
-                    if (getSharedPreferences("setting", MODE_PRIVATE).getBoolean("motor", true))
+                    if (isChecked)
                         connectionManager.write(Integer.toString(SETTING_MOTOR_ON));
                     else
                         connectionManager.write(Integer.toString(SETTING_MOTOR_OFF));
@@ -182,7 +178,10 @@ public class MainActivity extends AppCompatActivity {
         mainBarPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (timer.ready()) {
+                if (!isConnected) {
+                    setAboutBluetooth();
+                }
+                else if (timer.ready()) {
                     showCurrentSong();
                     playCurrentSong();
                 }
@@ -265,6 +264,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void showNoneSong() {
+        mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music_none));
+        mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile_none));
+        mainMusicMusician.setText(getResources().getString(R.string.main_music_musician_none));
+        mainMusicName.setText(getResources().getString(R.string.main_music_name_none));
+    }
+
     @SuppressLint("SetTextI18n")
     private void showCurrentSong() {
         if (isConnected) {
@@ -289,13 +295,6 @@ public class MainActivity extends AppCompatActivity {
                     break;
             }
         }
-    }
-
-    private void showNoneSong() {
-        mainMusic.setBackground(getResources().getDrawable(R.drawable.main_music_none));
-        mainMusicProfile.setBackground(getResources().getDrawable(R.drawable.main_music_profile_none));
-        mainMusicMusician.setText(getResources().getString(R.string.main_music_musician_none));
-        mainMusicName.setText(getResources().getString(R.string.main_music_name_none));
     }
 
     @SuppressLint("SetTextI18n")
@@ -515,7 +514,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         boolean ready() {
-            if (isConnected) {
+            if (!isConnected) {
                 setAboutBluetooth();
                 return false;
             } else if (timer.get(4).getText().toString().equals("") || timer.get(5).getText().toString().equals("")) {
@@ -560,10 +559,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (setTime > 59 || setTime < 10) {
                 Toast.makeText(MainActivity.this, "타이머를 다시 확인하세요.", Toast.LENGTH_LONG).show();
-                for (EditText e : timer) {
-                    e.setTextColor(getResources().getColor(R.color.colorBlack));
-                    e.setText("");
-                }
+                reset();
 
             } else {
 
@@ -583,12 +579,12 @@ public class MainActivity extends AppCompatActivity {
                                     @SuppressLint("SetTextI18n")
                                     @Override
                                     public void run() {
+                                        int logTime = setTime;
                                         if (setTime == 0) {
-                                            reset();
                                             isRunning = false;
+                                            reset();
                                         } else {
                                             try {
-                                                int logTime = setTime;
                                                 logTime -= Integer.parseInt(m2.getText().toString()) * 60;
                                                 s1.setText(Integer.toString(logTime / 10));
                                                 logTime -= Integer.parseInt(s1.getText().toString()) * 10;
@@ -596,8 +592,8 @@ public class MainActivity extends AppCompatActivity {
                                             } catch (Exception e) {
                                                 isRunning = false;
                                             }
+                                            setTime--;
                                         }
-                                        setTime--;
                                     }
                                 });
                             } catch (InterruptedException e) {
